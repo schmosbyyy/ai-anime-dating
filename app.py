@@ -51,7 +51,7 @@ def respond():
 
     # Get phoneme timings
     speech_marks_response = polly_client.synthesize_speech(
-        Text=response_text,
+        Text= message,#response_text,
         OutputFormat="json",
         VoiceId="Joanna",
         SpeechMarkTypes=["phoneme"]

@@ -23,9 +23,9 @@ s3_client = boto3.client(
 
 @app.route("/api/respond", methods=["POST"])
 def respond():
-    # data = request.get_json()
-    # message = data.get("message")
-    # personality = data.get("personality", "friendly")
+    data = request.get_json()
+    message = data.get("message")
+    personality = data.get("personality", "friendly")
 
     # # Generate response with OpenAI
     # prompt = f"You are an avatar with a {personality} personality. User says: {message}. Respond:"
@@ -38,7 +38,7 @@ def respond():
 
     # Generate audio with Amazon Polly
     polly_response = polly_client.synthesize_speech(
-        Text="Hello, I am an AI Anime Assisant. My name is lavender. How can I help you today?", #response_text,
+        Text=message, #response_text,
         OutputFormat="mp3",
         VoiceId="Joanna"
     )

@@ -54,10 +54,10 @@ def respond():
         Text= message,#response_text,
         OutputFormat="json",
         VoiceId="Joanna",
-        SpeechMarkTypes=["phoneme"]
+        SpeechMarkTypes=["viseme"]
     )
     speech_marks = speech_marks_response["AudioStream"].read().decode().splitlines()
-    timings = [{"time": float(json.loads(m)["time"]) / 1000, "phoneme": json.loads(m)["value"]}
+    timings = [{"time": float(json.loads(m)["time"]) / 1000, "viseme": json.loads(m)["value"]}
                for m in speech_marks]
 
     return jsonify({"audio_url": audio_url, "phoneme_timings": timings})

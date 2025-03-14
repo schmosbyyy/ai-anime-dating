@@ -76,9 +76,18 @@ def respond():
         elif mark_data["type"] == "word":
             word_timings.append({
                 "word": mark_data["value"],
-                "start_time": float(mark_data["time"]) / 1000,  # Start time in seconds
-                "end_time": float(mark_data["time"]) / 1000  # Polly provides only start time for words
+                "start_time": float(mark_data["time"]) / 1000,
+                "end_time": float(mark_data["time"]) / 1000  # Temporary, will adjust later
             })
+
+    # Adjust end_time for each word
+    for i in range(len(word_timings) - 1):
+        word_timings[i]["end_time"] = word_timings[i + 1]["start_time"]
+
+    # For the last word, set end_time to the last viseme time
+    if phoneme_timings:
+        last_viseme_time = phoneme_timings[-1]["time"]
+        word_timings[-1]["end_time"] = last_viseme_time
 
     # Return audio URL and both sets of timings
     return jsonify({

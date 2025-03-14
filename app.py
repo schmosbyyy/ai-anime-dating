@@ -87,7 +87,7 @@ def respond():
     # For the last word, set end_time to the last viseme time
     if phoneme_timings:
         last_viseme_time = phoneme_timings[-1]["time"]
-        word_timings[-1]["end_time"] = last_viseme_time
+        word_timings[-1]["end_time"] = float(10000)#last_viseme_time
 
     # Return audio URL and both sets of timings
     return jsonify({

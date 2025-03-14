@@ -55,16 +55,37 @@ def respond():
 
     # Get phoneme timings
     speech_marks_response = polly_client.synthesize_speech(
-        Text= message,#response_text,
+        Text=message,
         OutputFormat="json",
         VoiceId="Joanna",
-        SpeechMarkTypes=["viseme"]
+        SpeechMarkTypes=["viseme", "word"]  # Request both viseme and word speech marks
     )
     speech_marks = speech_marks_response["AudioStream"].read().decode().splitlines()
-    timings = [{"time": float(json.loads(m)["time"]) / 1000, "viseme": json.loads(m)["value"]}
-               for m in speech_marks]
 
-    return jsonify({"audio_url": audio_url, "phoneme_timings": timings})
+    # Separate viseme and word timings
+    phoneme_timings = []
+    word_timings = []
+
+    for mark in speech_marks:
+        mark_data = json.loads(mark)
+        if mark_data["type"] == "viseme":
+            phoneme_timings.append({
+                "time": float(mark_data["time"]) / 1000,  # Convert milliseconds to seconds
+                "viseme": mark_data["value"]
+            })
+        elif mark_data["type"] == "word":
+            word_timings.append({
+                "word": mark_data["value"],
+                "start_time": float(mark_data["time"]) / 1000,  # Start time in seconds
+                "end_time": float(mark_data["time"]) / 1000  # Polly provides only start time for words
+            })
+
+    # Return audio URL and both sets of timings
+    return jsonify({
+        "audio_url": audio_url,
+        "phoneme_timings": phoneme_timings,
+        "word_timings": word_timings
+    })
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))  # Use Render's PORT env var

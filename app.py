@@ -8,7 +8,7 @@ import os
 app = Flask(__name__)
 
 # Enable CORS for all routes, allowing requests from your frontend
-CORS(app, resources={r"/api/*": {"origins": "http://localhost:5173"}})  # Restrict to your dev origin
+CORS(app, resources={r"/api/*": {"origins": "*"}}) # Restrict to your dev origin
 
 # Configure API keys and AWS credentials from environment variables
 openai.api_key = os.environ.get("OPENAI_API_KEY")

@@ -4,7 +4,7 @@ import openai
 import boto3
 import json
 import os
-from google import genai
+import google.generativeai as genai
 
 app = Flask(__name__)
 
@@ -139,7 +139,7 @@ def respond():
     client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
     aiResponse = client.models.generate_content(
             model="gemini-2.0-flash",
-            config=types.GenerateContentConfig(
+            config=genai.types.GenerateContentConfig(
                 system_instruction=sys_assistant_instruct),
             contents=[message]
         )
@@ -209,7 +209,7 @@ def respond():
 
     expressionJSON = client.models.generate_content(
         model="gemini-2.0-flash",
-        config=types.GenerateContentConfig(
+        config=genai.types.GenerateContentConfig(
             system_instruction=sys_instruct),
         contents=[expressionQuestion]
     )

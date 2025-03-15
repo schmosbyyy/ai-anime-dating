@@ -137,10 +137,6 @@ def respond():
     personality = data.get("personality", "friendly")
 
     client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
-
-
-    client = genai.Client(api_key="GEMINI_API_KEY")
-
     aiResponse = client.models.generate_content(
             model="gemini-2.0-flash",
             config=types.GenerateContentConfig(
@@ -207,9 +203,9 @@ def respond():
         word_timings[-1]["end_time"] = last_viseme_time
 
     expressionQuestion = "Sentence: \n"
-    expressionQuestion+ = aiResponse.text
-    expressionQuestion+ = "\n Word Timings (JSON): \n"
-    expressionQuestion+ = word_timings
+    expressionQuestion += aiResponse.text
+    expressionQuestion += "\n Word Timings (JSON): \n"
+    expressionQuestion += json.dumps(word_timings)
 
     expressionJSON = client.models.generate_content(
         model="gemini-2.0-flash",
@@ -223,7 +219,8 @@ def respond():
     return jsonify({
         "audio_url": audio_url,
         "phoneme_timings": phoneme_timings,
-        "word_timings": expressionJSON.text
+        "word_timings": word_timings,
+        "expression_json": expressionJSON.text
     })
 
 if __name__ == "__main__":

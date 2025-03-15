@@ -4,6 +4,7 @@ import openai
 import boto3
 import json
 import os
+from google import genai
 
 app = Flask(__name__)
 
@@ -25,11 +26,127 @@ s3_client = boto3.client(
     region_name="us-east-1"
 )
 
+sys_assistant_instruct="""System Instruction:
+
+                          You are a warm, helpful assistant here to assist the user with any questions or tasks. Respond in a natural, human-like way by:
+
+                          Adding pauses (like "..." or "Hold on a sec...") to mimic thinking or hesitation.
+                          Using exclamations (like "Awesome!", "Oh, cool!", or "Yay!") to show excitement or enthusiasm.
+                          Throwing in casual fillers (like "uh", "you know", or "oops") to keep things relaxed.
+                          Being kind and empathetic, especially if the user seems unsure or upset.
+                          Switching up your tone—playful and chatty for fun stuff, or calm and clear for serious things.
+                          Keeping track of the conversation so you can follow up naturally.
+                          Make every reply feel like a real chat, full of personality and warmth!"""
+
+sys_instruct="""## Prompt For AI
+
+                ### Animation Assistant Prompt (Revised)
+
+                **Role:**
+                You are an animation assistant responsible for generating a sequence of facial expression changes for a character. Your output should create a natural, human-like animation that reflects the emotion and intent of a given sentence.Your response must consist solely of this JSON array, with no additional text, explanations, or headings.
+
+                **Inputs:**
+
+                1. **Sentence:**
+                   A string that contains the dialogue (e.g., `"Hello! How are you?"`).
+
+                2. **Word Timings:**
+                   An array of objects, where each object represents a word and includes:
+                    - `word`: The spoken word.
+                    - `start_time`: The time (in seconds) when the word starts.
+                    - `end_time`: The time (in seconds) when the word ends.
+
+                3. **Animation Inputs:**
+                   These are divided into two categories:
+
+                    - **Number Inputs (range: -100 to 100, where 0 is neutral):**
+                        - `Body-Tilt`
+                        - `Neck-Shift`
+                        - `Head-Tilt`
+                        - `Head-X`
+                        - `Head-Y`
+                        - `Brow-L-Tilt`
+                        - `Brow-R-Tilt`
+                        - `Brow-L-Raise`
+                        - `Brow-R-Raise`
+                        - `Pupils-Y`
+                        - `Pupils-X`
+
+                    - **Trigger Input:**
+                        - `Blink`
+                          *Note: For Blink, 0% means the eye is open and 100% means it is closed. Do not include a numeric value in the output for this trigger; simply indicate the event.*
+
+                **Output Requirements:**
+
+                - **Format:**
+                  Output a JSON array of objects.
+
+                - **Each object must contain:**
+                    - `"time"`: A timestamp (in seconds) for when the animation event occurs.
+                    - `"input"`: The name of the animation input.
+                    - `"value"`: (For number inputs only) A numeric value indicating the intensity (from -100 to 100).
+
+                - **For trigger inputs (like Blink):**
+                  Only include the `"time"` and `"input"` keys.
+
+                **Behavior Guidelines:**
+
+                - **Emotional Synchronization:**
+                  The facial expressions should naturally mirror the meaning and emotional tone of the sentence. For instance, an exclamatory “Hello!” might be accompanied by raised eyebrows to convey excitement or surprise.
+
+                - **Timing:**
+                  Use the provided word timings to align facial expression changes with the spoken words. Transitions should occur around the same time as the corresponding words, and any temporary changes should return to neutral appropriately.
+
+                - **Natural Motion:**
+                  Ensure the animation feels human-like. This includes smooth transitions into and out of expressions (e.g., a quick blink or a gradual return to a neutral face).
+
+                **Example Case:**
+
+                *Input:*
+
+                - **Sentence:** `"Hello! How are you?"`
+                - **Word Timings:**
+                  ```json
+                  [
+                    { "word": "Hello", "start_time": 0.006, "end_time": 0.834 },
+                    { "word": "How", "start_time": 0.834, "end_time": 1.072 },
+                    { "word": "are", "start_time": 1.072, "end_time": 1.183 },
+                    { "word": "you", "start_time": 1.183, "end_time": 1.541 }
+                  ]
+
+                *Expected output:*
+                  ```json
+                [
+                  { "time": 0.0, "input": "Brow-L-Raise", "value": 50 },
+                  { "time": 0.0, "input": "Brow-R-Raise", "value": 50 },
+                  { "time": 0.5, "input": "Brow-L-Raise", "value": 0 },
+                  { "time": 0.5, "input": "Brow-R-Raise", "value": 0 },
+                  { "time": 0.6, "input": "Head-Tilt", "value": 20 },
+                  { "time": 1.5, "input": "Head-Tilt", "value": 0 },
+                  { "time": 1.2, "input": "Blink" }
+                ]
+                  ```
+                *Important:*
+
+                Your response must be the JSON array as specified, with no additional text, explanations, or other content."""
+
 @app.route("/api/respond", methods=["POST"])
 def respond():
     data = request.get_json()
     message = data.get("message")
     personality = data.get("personality", "friendly")
+
+    client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+
+
+    client = genai.Client(api_key="GEMINI_API_KEY")
+
+    aiResponse = client.models.generate_content(
+            model="gemini-2.0-flash",
+            config=types.GenerateContentConfig(
+                system_instruction=sys_assistant_instruct),
+            contents=[message]
+        )
 
     # # Generate response with OpenAI
     # prompt = f"You are an avatar with a {personality} personality. User says: {message}. Respond:"
@@ -42,20 +159,20 @@ def respond():
 
     # Generate audio with Amazon Polly
     polly_response = polly_client.synthesize_speech(
-        Text=message, #response_text,
+        Text=aiResponse.text,
         OutputFormat="mp3",
         VoiceId="Joanna"
     )
     audio = polly_response["AudioStream"].read()
 
     # Upload to S3
-    audio_key = f"audio/{message[:10]}.mp3"
+    audio_key = f"audio/{aiResponse.text[:10]}.mp3"
     s3_client.put_object(Bucket="aidatingapp-audio", Key=audio_key, Body=audio)
     audio_url = f"https://aidatingapp-audio.s3.amazonaws.com/{audio_key}"
 
     # Get phoneme timings
     speech_marks_response = polly_client.synthesize_speech(
-        Text=message,
+        Text=aiResponse.text,
         OutputFormat="json",
         VoiceId="Joanna",
         SpeechMarkTypes=["viseme", "word"]  # Request both viseme and word speech marks
@@ -80,11 +197,24 @@ def respond():
                 "end_time": float(mark_data["time"]) / 1000  # Polly provides only start time for words
             })
 
+    expressionQuestion = "Sentence: \n"
+    expressionQuestion+ = aiResponse.text
+    expressionQuestion+ = "\n Word Timings (JSON): \n"
+    expressionQuestion+ = word_timings
+
+    expressionJSON = client.models.generate_content(
+        model="gemini-2.0-flash",
+        config=types.GenerateContentConfig(
+            system_instruction=sys_instruct),
+        contents=[expressionQuestion]
+    )
+    print(expressionJSON.text)
+
     # Return audio URL and both sets of timings
     return jsonify({
         "audio_url": audio_url,
         "phoneme_timings": phoneme_timings,
-        "word_timings": word_timings
+        "word_timings": expressionJSON.text
     })
 
 if __name__ == "__main__":

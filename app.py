@@ -209,7 +209,10 @@ def respond():
                 "end_time": (e["time"] + e["duration"]) / 1000  # End time in seconds
             } for e in word_events
         ]
-
+        # Upload to S3
+        audio_key = f"audio/{aiResponse.text[:10]}.mp3"
+        s3_client.put_object(Bucket="aidatingapp-audio", Key=audio_key, Body=result.audio_data)
+        audio_url = f"https://aidatingapp-audio.s3.amazonaws.com/{audio_key}"
         # Return JSON response
         return jsonify({
             "phoneme_timings": phoneme_timings,
@@ -229,10 +232,9 @@ def respond():
 #     )
 #     audio = polly_response["AudioStream"].read()
 #
-    # Upload to S3
-    audio_key = f"audio/{aiResponse.text[:10]}.mp3"
-    s3_client.put_object(Bucket="aidatingapp-audio", Key=audio_key, Body=result.audio_data)
-    audio_url = f"https://aidatingapp-audio.s3.amazonaws.com/{audio_key}"
+
+#originally posting to S3 happened here
+
 #
 #     # Get phoneme timings
 #     speech_marks_response = polly_client.synthesize_speech(

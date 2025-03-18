@@ -2,7 +2,6 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import base64
 import openai
-import boto3
 import json
 import os
 from google import genai
@@ -13,14 +12,6 @@ app = Flask(__name__)
 
 # Enable CORS for all routes, allowing requests from your frontend
 CORS(app, resources={r"/api/*": {"origins": ["http://localhost:5173", "http://127.0.0.1:5173"]}})
-
-s3_client = boto3.client(
-    "s3",
-    aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID"),
-    aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY"),
-    region_name="us-east-1"
-)
-
 system_instruction="""# Instruction Prompt for LLM
 
                       ## Prompt:
@@ -145,10 +136,7 @@ def respond():
     # Ensure proper SSML header
     if not textValue.startswith('<speak version='):
         textValue = '<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US"><voice name="en-US-JennyNeural">' + textValue[7:-8] + '</voice></speak>'
-    print("SSML to synthesize:", textValue)
     result = synthesizer.speak_ssml_async(textValue).get() #speak_ssml_async or speak_text_async
-    print("Synthesis result reason:", result.reason)
-
     # Check synthesis result and retrieve audio and timings
     if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
         # Separate viseme and word events

@@ -122,8 +122,9 @@ def respond():
 
     # Synthesize speech from the input text
     textValue = aiResponse.text.strip()
+    print("SSML to synthesize:", textValue)
     result = synthesizer.speak_ssml_async(textValue).get() #speak_ssml_async or speak_text_async
-
+    print("Synthesis result reason:", result.reason)
 
     # Check synthesis result and retrieve audio and timings
     if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
@@ -146,14 +147,7 @@ def respond():
             }
             for event in bookmark_events
         ]
-        # Format word_timings with start and end times
-#         word_timings = [
-#             {
-#                 "word": e["value"],                   # The word text
-#                 "start_time": e["time"] / 1000,       # Start time in seconds
-#                 "end_time": (e["time"] + e["duration"]) / 1000  # End time in seconds
-#             } for e in word_events
-#         ]
+
         # Upload to S3
         audio_key = f"audio/{textValue[:10]}.wav"
         s3_client.put_object(Bucket="aidatingapp-audio", Key=audio_key, Body=result.audio_data)
@@ -166,11 +160,11 @@ def respond():
         return jsonify({
             "ai_response": textValue,
             "phoneme_timings": phoneme_timings,
-#             "word_timings": word_timings,
             "bookmark_timings": bookmark_timings
         })
     else:
         # Return error if synthesis fails
+        print("Error: ", result.reason)
         return jsonify({"error": "Synthesis failed"}), 500
 
 if __name__ == "__main__":

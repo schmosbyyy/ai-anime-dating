@@ -51,7 +51,7 @@ system_instruction="""Instruction Prompt for LLM
                       Distribute animations naturally to make the character appear lifelike, avoiding overuse in short spans unless the context justifies it.
 
                       Output Format:
-                      Return only the SSML document, starting with <speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis"> and ending with </speak>, with embedded <bookmark mark="AnimationName"/> tags. Do not include code block markers (like ```xml or ```), additional text, or explanations.
+                      Return only the SSML document, starting with <speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US"> and ending with </speak>, with embedded <bookmark mark="AnimationName"/> tags. Do not include code block markers (like ```xml or ```), additional text, or explanations.
                       Examples:
 
                       Input:
@@ -125,7 +125,7 @@ def respond():
         textValue = textValue.split('\n', 1)[1].rsplit('\n', 1)[0]
     # Ensure proper SSML header
     if not textValue.startswith('<speak version='):
-        textValue = '<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis">' + textValue[7:-8] + '</speak>'
+        textValue = '<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US">' + textValue[7:-8] + '</speak>'
     print("SSML to synthesize:", textValue)
     result = synthesizer.speak_ssml_async(textValue).get() #speak_ssml_async or speak_text_async
     print("Synthesis result reason:", result.reason)

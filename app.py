@@ -85,7 +85,7 @@ sys_instruct="""## Prompt For AI
                 - **Each object must contain:**
                     - `"time"`: A timestamp (in seconds) for when the animation event occurs.
                     - `"input"`: The name of the animation input.
-                    - `"value"`: (For number inputs only) A numeric value indicating the intensity (from -100 to 100).
+                    - `"value"`: (For number inputs only) A numeric value indicating the intensity (from -30 to 30).
 
                 - **For trigger inputs (like Blink):**
                   Only include the `"time"` and `"input"` keys.
@@ -171,7 +171,7 @@ def respond():
     speech_marks_response = polly_client.synthesize_speech(
         Text=aiResponse.text,
         OutputFormat="json",
-        VoiceId="Kendra",
+        VoiceId="Danielle",
         SpeechMarkTypes=["viseme", "word"]  # Request both viseme and word speech marks
     )
     speech_marks = speech_marks_response["AudioStream"].read().decode().splitlines()

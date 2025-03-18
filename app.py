@@ -162,6 +162,7 @@ def respond():
         print(bookmark_timings)
 
         return jsonify({
+            "audio_url": audio_url,
             "ai_response": textValue,
             "phoneme_timings": phoneme_timings,
             "bookmark_timings": bookmark_timings

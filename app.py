@@ -180,7 +180,8 @@ def respond():
         })
 
     # Attach event handlers
-    synthesizer.word_boundary.connect(word_boundary_handler)
+    synthesizer.synthesis_word_boundary.connect(word_boundary_handler)
+#     synthesizer.word_boundary.connect(word_boundary_handler)
     synthesizer.viseme_received.connect(viseme_handler)
 
     # Synthesize speech from the input text

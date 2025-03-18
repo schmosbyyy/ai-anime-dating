@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+import base64
 import openai
 import boto3
 import json
@@ -174,16 +175,16 @@ def respond():
         ]
 
         # Upload to S3
-        audio_key = f"audio/{textValue[:10]}.wav"
-        s3_client.put_object(Bucket="aidatingapp-audio", Key=audio_key, Body=result.audio_data)
-        audio_url = f"https://aidatingapp-audio.s3.amazonaws.com/{audio_key}"
+#         audio_key = f"audio/{textValue[:10]}.wav"
+#         s3_client.put_object(Bucket="aidatingapp-audio", Key=audio_key, Body=result.audio_data)
+#         audio_url = f"https://aidatingapp-audio.s3.amazonaws.com/{audio_key}"
         # Return JSON response
-        print(textValue)
-        print(phoneme_timings)
-        print(bookmark_timings)
+        audio_data = result.audio_data  # Binary audio data
 
+        # Convert audio data to base64 string
+        audio_base64 = base64.b64encode(audio_data).decode('utf-8')
         return jsonify({
-            "audio_url": audio_url,
+            "audio_url": audio_base64,
             "ai_response": textValue,
             "phoneme_timings": phoneme_timings,
             "bookmark_timings": bookmark_timings

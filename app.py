@@ -13,14 +13,6 @@ app = Flask(__name__)
 # Enable CORS for all routes, allowing requests from your frontend
 CORS(app, resources={r"/api/*": {"origins": ["http://localhost:5173", "http://127.0.0.1:5173"]}})
 
-# Configure API keys and AWS credentials from environment variables
-openai.api_key = os.environ.get("OPENAI_API_KEY")
-polly_client = boto3.client(
-    "polly",
-    aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID"),
-    aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY"),
-    region_name="us-east-1"
-)
 s3_client = boto3.client(
     "s3",
     aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID"),
@@ -39,98 +31,55 @@ sys_assistant_instruct="""System Instruction:
                           Switching up your tone—playful and chatty for fun stuff, or calm and clear for serious things.
                           Keeping track of the conversation so you can follow up naturally.
                           Make every reply feel like a real chat, full of personality and warmth!"""
+system_instruction="""Instruction Prompt for LLM
+                      Prompt:
 
-sys_instruct="""## Prompt For AI
+                      You are an AI assistant tasked with enhancing a given text paragraph by embedding SSML (Speech Synthesis Markup Language) bookmarks. These bookmarks will trigger specific animations during speech synthesis when processed by Azure Text-to-Speech. The available animations are:
 
-                ### Animation Assistant Prompt (Revised)
+                      Body-Tilt
+                      Neck-Shift
+                      Head-Tilt
+                      Head-X
+                      Head-Y
+                      Brow-L-Tilt
+                      Brow-R-Tilt
+                      Brow-L-Raise
+                      Brow-R-Raise
+                      Pupils-Y
+                      Pupils-X
+                      Your task is to:
 
-                **Role:**
-                You are an animation assistant responsible for generating a sequence of facial expression changes for a character. Your output should create a natural, human-like animation that reflects the emotion and intent of a given sentence.Your response must consist solely of this JSON array, with no additional text, explanations, or headings.
+                      Analyze the input text paragraph.
+                      Insert SSML <bookmark mark="AnimationName"/> tags at appropriate points where the corresponding animation would naturally enhance the expression or movement of a speaking character, based on the text’s content, tone, or context.
+                      Ensure the output is a valid SSML document by wrapping the modified text in <speak> tags.
+                      Guidelines for Inserting Bookmarks:
 
-                **Inputs:**
+                      Place bookmarks where animations align with the meaning or emotion of the text. For example:
+                      Use <bookmark mark="Head-Tilt"/> after questions or when the text implies curiosity or contemplation.
+                      Use <bookmark mark="Brow-L-Raise"/> and <bookmark mark="Brow-R-Raise"/> for surprise, excitement, or emphasis.
+                      Use <bookmark mark="Pupils-X"/> or <bookmark mark="Pupils-Y"/> for subtle eye movements, such as shifting focus.
+                      Use other animations like Body-Tilt or Neck-Shift to reflect physical gestures that match the dialogue’s intent.
+                      Distribute animations naturally to make the character appear lifelike, avoiding overuse in short spans unless the context justifies it.
+                      Output Format:
+                      Return the text as a valid SSML document, starting with <speak> and ending with </speak>, with embedded <bookmark mark="AnimationName"/> tags. Do not alter the original text content beyond inserting these bookmarks.
 
-                1. **Sentence:**
-                   A string that contains the dialogue (e.g., `"Hello! How are you?"`).
+                      Examples:
 
-                2. **Word Timings:**
-                   An array of objects, where each object represents a word and includes:
-                    - `word`: The spoken word.
-                    - `start_time`: The time (in seconds) when the word starts.
-                    - `end_time`: The time (in seconds) when the word ends.
+                      Input:
+                      "Hello, how are you? I hope you're doing well."
+                      Output:
+                      <speak>Hello, how are you? <bookmark mark="Head-Tilt"/> I hope you're doing well.</speak>
+                      (A head tilt is added after the question to suggest curiosity.)
+                      Input:
+                      "That’s amazing! I didn’t expect that at all."
+                      Output:
+                      <speak>That’s amazing! <bookmark mark="Brow-L-Raise"/><bookmark mark="Brow-R-Raise"/> I didn’t expect that at all.</speak>
+                      (Raised eyebrows emphasize the surprise at "amazing.")
+                      Input Text to Enhance:
 
-                3. **Animation Inputs:**
-                   These are divided into two categories:
+                      [Insert the input text here]
 
-                    - **Number Inputs (range: -100 to 100, where 0 is neutral):**
-                        - `Body-Tilt`
-                        - `Neck-Shift`
-                        - `Head-Tilt`
-                        - `Head-X`
-                        - `Head-Y`
-                        - `Brow-L-Tilt`
-                        - `Brow-R-Tilt`
-                        - `Brow-L-Raise`
-                        - `Brow-R-Raise`
-                        - `Pupils-Y`
-                        - `Pupils-X`
-
-                    - **Trigger Input:**
-                        - `Blink`
-                          *Note: For Blink, 0% means the eye is open and 100% means it is closed. Do not include a numeric value in the output for this trigger; simply indicate the event.*
-
-                **Output Requirements:**
-
-                - **Format:**
-                  Output a JSON array of objects.
-
-                - **Each object must contain:**
-                    - `"time"`: A timestamp (in seconds) for when the animation event occurs.
-                    - `"input"`: The name of the animation input.
-                    - `"value"`: (For number inputs only) A numeric value indicating the intensity (from -30 to 30).
-
-                - **For trigger inputs (like Blink):**
-                  Only include the `"time"` and `"input"` keys.
-
-                **Behavior Guidelines:**
-
-                - **Emotional Synchronization:**
-                  The facial expressions should naturally mirror the meaning and emotional tone of the sentence. For instance, an exclamatory “Hello!” might be accompanied by raised eyebrows to convey excitement or surprise.
-
-                - **Timing:**
-                  Use the provided word timings to align facial expression changes with the spoken words. Transitions should occur around the same time as the corresponding words, and any temporary changes should return to neutral appropriately.
-
-                - **Natural Motion:**
-                  Ensure the animation feels human-like. This includes smooth transitions into and out of expressions (e.g., a quick blink or a gradual return to a neutral face).
-
-                **Example Case:**
-
-                *Input:*
-
-                - **Sentence:** `"Hello! How are you?"`
-                - **Word Timings:**
-                  ```json
-                  [
-                    { "word": "Hello", "start_time": 0.006, "end_time": 0.834 },
-                    { "word": "How", "start_time": 0.834, "end_time": 1.072 },
-                    { "word": "are", "start_time": 1.072, "end_time": 1.183 },
-                    { "word": "you", "start_time": 1.183, "end_time": 1.541 }
-                  ]
-
-                *Expected output:*
-                  ```json
-                [
-                  { "time": 0.0, "input": "Brow-L-Raise", "value": 50 },
-                  { "time": 0.0, "input": "Brow-R-Raise", "value": 50 },
-                  { "time": 0.5, "input": "Brow-L-Raise", "value": 0 },
-                  { "time": 0.5, "input": "Brow-R-Raise", "value": 0 },
-                  { "time": 0.6, "input": "Head-Tilt", "value": 20 },
-                  { "time": 1.5, "input": "Head-Tilt", "value": 0 },
-                  { "time": 1.2, "input": "Blink" }
-                ]
-                  ```
-                *Important:*
-
-                Your response must be the JSON array as specified, with no additional text, explanations, or other content."""
+                      Please generate the SSML-enhanced text based on this input."""
 
 @app.route("/api/respond", methods=["POST"])
 def respond():
@@ -142,8 +91,8 @@ def respond():
     aiResponse = client.models.generate_content(
             model="gemini-2.0-flash",
             config=types.GenerateContentConfig(
-                system_instruction=sys_assistant_instruct),
-            contents=[message]
+                system_instruction=system_instruction), #using the SSML instructions prompt here
+            contents=[message] #send the user input
         )
 
 
@@ -151,7 +100,7 @@ def respond():
     subscription_key = os.environ.get("AZURE_API_KEY")
     region = "canadacentral"
     speech_config = speechsdk.SpeechConfig(subscription=subscription_key, region=region)
-    speech_config.speech_synthesis_voice_name = "en-US-JennyNeural"  # Similar to Polly's "Joanna"
+    speech_config.speech_synthesis_voice_name = "en-US-JennyNeural"
 
     # Create speech synthesizer
     synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=None)
@@ -180,10 +129,19 @@ def respond():
             "value": evt.viseme_id
         })
 
+    # Define handler for Bookmark events
+    def bookmark_handler(evt):
+        offset_ms = evt.audio_offset / 10000  # Convert from ticks (100-ns units) to milliseconds
+        events.append({
+            "time": offset_ms,
+            "type": "bookmark",
+            "mark": evt.text  # The 'mark' attribute from the <bookmark> tag
+        })
+
     # Attach event handlers
     synthesizer.synthesis_word_boundary.connect(word_boundary_handler)
-#     synthesizer.word_boundary.connect(word_boundary_handler)
     synthesizer.viseme_received.connect(viseme_handler)
+    synthesizer.bookmark_reached.connect(bookmark_handler)
 
     # Synthesize speech from the input text
     text = aiResponse.text
@@ -194,6 +152,7 @@ def respond():
         # Separate viseme and word events
         viseme_events = [e for e in events if e["type"] == "viseme"]
         word_events = [e for e in events if e["type"] == "word"]
+        bookmark_events = [e for e in events if e["type"] == "bookmark"]
 
         # Format phoneme_timings (viseme timings)
         phoneme_timings = [
@@ -202,7 +161,13 @@ def respond():
                 "viseme": e["value"]         # Azure viseme ID (integer)
             } for e in viseme_events
         ]
-
+        bookmark_timings = [
+            {
+                "time": event["time"] / 1000,  # Convert milliseconds to seconds
+                "mark": event["mark"]          # The bookmark name (e.g., "Head-Tilt")
+            }
+            for event in bookmark_events
+        ]
         # Format word_timings with start and end times
         word_timings = [
             {
@@ -218,82 +183,12 @@ def respond():
         # Return JSON response
         return jsonify({
             "phoneme_timings": phoneme_timings,
-            "word_timings": word_timings
+            "word_timings": word_timings,
+            "bookmark_timings": bookmark_timings
         })
     else:
         # Return error if synthesis fails
         return jsonify({"error": "Synthesis failed"}), 500
-
-
-    #AMAZON Polly LOGIC:
-    # Generate audio with Amazon Polly
-#     polly_response = polly_client.synthesize_speech(
-#         Text=aiResponse.text,
-#         OutputFormat="mp3",
-#         VoiceId="Joanna"
-#     )
-#     audio = polly_response["AudioStream"].read()
-#
-
-#originally posting to S3 happened here
-
-#
-#     # Get phoneme timings
-#     speech_marks_response = polly_client.synthesize_speech(
-#         Text=aiResponse.text,
-#         OutputFormat="json",
-#         VoiceId="Joanna",
-#         SpeechMarkTypes=["viseme", "word"]  # Request both viseme and word speech marks
-#     )
-#     speech_marks = speech_marks_response["AudioStream"].read().decode().splitlines()
-#
-#     # Separate viseme and word timings
-#     phoneme_timings = []
-#     word_timings = []
-
-#     for mark in speech_marks:
-#         mark_data = json.loads(mark)
-#         if mark_data["type"] == "viseme":
-#             phoneme_timings.append({
-#                 "time": float(mark_data["time"]) / 1000,  # Convert milliseconds to seconds
-#                 "viseme": mark_data["value"]
-#             })
-#         elif mark_data["type"] == "word":
-#             word_timings.append({
-#                 "word": mark_data["value"],
-#                 "start_time": float(mark_data["time"]) / 1000,
-#                 "end_time": float(mark_data["time"]) / 1000  # Temporary, will adjust later
-#             })
-#
-#     # Adjust end_time for each word
-#     for i in range(len(word_timings) - 1):
-#         word_timings[i]["end_time"] = word_timings[i + 1]["start_time"]
-#
-#     # For the last word, set end_time to the last viseme time
-#     if phoneme_timings:
-#         last_viseme_time = phoneme_timings[-1]["time"]
-#         word_timings[-1]["end_time"] = last_viseme_time
-
-#     expressionQuestion = "Sentence: \n"
-#     expressionQuestion += aiResponse.text
-#     expressionQuestion += "\n Word Timings (JSON): \n"
-#     expressionQuestion += json.dumps(word_timings)
-
-#     expressionJSON = client.models.generate_content(
-#         model="gemini-2.0-flash",
-#         config=types.GenerateContentConfig(
-#             system_instruction=sys_instruct),
-#         contents=[expressionQuestion]
-#     )
-#     print(expressionJSON.text)
-
-    # Return audio URL and both sets of timings
-#     return jsonify({
-#         "audio_url": audio_url,
-#         "phoneme_timings": phoneme_timings,
-#         "word_timings": word_timings,
-# #         "expression_json": expressionJSON.text
-#     })
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))  # Use Render's PORT env var

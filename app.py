@@ -75,11 +75,7 @@ system_instruction="""Instruction Prompt for LLM
                       Output:
                       <speak>That’s amazing! <bookmark mark="Brow-L-Raise"/><bookmark mark="Brow-R-Raise"/> I didn’t expect that at all.</speak>
                       (Raised eyebrows emphasize the surprise at "amazing.")
-                      Input Text to Enhance:
-
-                      [Insert the input text here]
-
-                      Please generate the SSML-enhanced text based on this input."""
+                      Input Text to Enhance:"""
 
 @app.route("/api/respond", methods=["POST"])
 def respond():
@@ -88,11 +84,14 @@ def respond():
     personality = data.get("personality", "friendly")
 
     client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+    question += "Input:\n"
+    question += message
+    question += "\n Please generate the SSML-enhanced text based on this input."
     aiResponse = client.models.generate_content(
             model="gemini-2.0-flash",
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction), #using the SSML instructions prompt here
-            contents=[message] #send the user input
+            contents=[question] #send the user input
         )
 
 
@@ -109,16 +108,16 @@ def respond():
     events = []
 
     # Define handler for word boundary events
-    def word_boundary_handler(evt):
-        start_ms = evt.audio_offset / 10000  # Convert ticks to milliseconds
-#         duration_ms = evt.duration / 10000   # Convert ticks to milliseconds
-        duration_ms = evt.duration.total_seconds() * 1000
-        events.append({
-           "time": start_ms,
-           "duration": duration_ms,
-           "type": "word",
-           "value": evt.text
-        })
+#     def word_boundary_handler(evt):
+#         start_ms = evt.audio_offset / 10000  # Convert ticks to milliseconds
+# #         duration_ms = evt.duration / 10000   # Convert ticks to milliseconds
+#         duration_ms = evt.duration.total_seconds() * 1000
+#         events.append({
+#            "time": start_ms,
+#            "duration": duration_ms,
+#            "type": "word",
+#            "value": evt.text
+#         })
 
     # Define handler for viseme events
     def viseme_handler(evt):
@@ -139,7 +138,7 @@ def respond():
         })
 
     # Attach event handlers
-    synthesizer.synthesis_word_boundary.connect(word_boundary_handler)
+#     synthesizer.synthesis_word_boundary.connect(word_boundary_handler)
     synthesizer.viseme_received.connect(viseme_handler)
     synthesizer.bookmark_reached.connect(bookmark_handler)
 
@@ -169,21 +168,22 @@ def respond():
             for event in bookmark_events
         ]
         # Format word_timings with start and end times
-        word_timings = [
-            {
-                "word": e["value"],                   # The word text
-                "start_time": e["time"] / 1000,       # Start time in seconds
-                "end_time": (e["time"] + e["duration"]) / 1000  # End time in seconds
-            } for e in word_events
-        ]
+#         word_timings = [
+#             {
+#                 "word": e["value"],                   # The word text
+#                 "start_time": e["time"] / 1000,       # Start time in seconds
+#                 "end_time": (e["time"] + e["duration"]) / 1000  # End time in seconds
+#             } for e in word_events
+#         ]
         # Upload to S3
         audio_key = f"audio/{aiResponse.text[:10]}.wav"
         s3_client.put_object(Bucket="aidatingapp-audio", Key=audio_key, Body=result.audio_data)
         audio_url = f"https://aidatingapp-audio.s3.amazonaws.com/{audio_key}"
         # Return JSON response
         return jsonify({
+            "ai_response": aiResponse.text,
             "phoneme_timings": phoneme_timings,
-            "word_timings": word_timings,
+#             "word_timings": word_timings,
             "bookmark_timings": bookmark_timings
         })
     else:

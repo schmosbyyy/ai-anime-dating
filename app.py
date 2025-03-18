@@ -158,7 +158,7 @@ def respond():
     polly_response = polly_client.synthesize_speech(
         Text=aiResponse.text,
         OutputFormat="mp3",
-        VoiceId="Joanna"
+        VoiceId="Danielle"
     )
     audio = polly_response["AudioStream"].read()
 

@@ -86,7 +86,7 @@ sys_instruct="""## Prompt For AI
                 - **Each object must contain:**
                     - `"time"`: A timestamp (in seconds) for when the animation event occurs.
                     - `"input"`: The name of the animation input.
-                    - `"value"`: (For number inputs only) A numeric value indicating the intensity (from -100 to 100).
+                    - `"value"`: (For number inputs only) A numeric value indicating the intensity (from -30 to 30).
 
                 - **For trigger inputs (like Blink):**
                   Only include the `"time"` and `"input"` keys.

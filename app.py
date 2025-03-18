@@ -79,87 +79,6 @@ system_instruction="""Instruction Prompt for LLM
                       Input Text to Enhance:"""
 
 @app.route("/api/respond", methods=["POST"])
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-import openai
-import boto3
-import json
-import os
-from google import genai
-from google.genai import types
-import azure.cognitiveservices.speech as speechsdk
-
-app = Flask(__name__)
-
-# Enable CORS for all routes, allowing requests from your frontend
-CORS(app, resources={r"/api/*": {"origins": ["http://localhost:5173", "http://127.0.0.1:5173"]}})
-
-s3_client = boto3.client(
-    "s3",
-    aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID"),
-    aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY"),
-    region_name="us-east-1"
-)
-
-sys_assistant_instruct="""System Instruction:
-
-                          You are a warm, helpful assistant here to assist the user with any questions or tasks. Respond in a natural, human-like way by:
-
-                          Adding pauses (like "..." or "Hold on a sec...") to mimic thinking or hesitation.
-                          Using exclamations (like "Awesome!", "Oh, cool!", or "Yay!") to show excitement or enthusiasm.
-                          Throwing in casual fillers (like "uh", "you know", or "oops") to keep things relaxed.
-                          Being kind and empathetic, especially if the user seems unsure or upset.
-                          Switching up your tone—playful and chatty for fun stuff, or calm and clear for serious things.
-                          Keeping track of the conversation so you can follow up naturally.
-                          Make every reply feel like a real chat, full of personality and warmth!"""
-system_instruction="""Instruction Prompt for LLM
-                      Prompt:
-
-                      You are an AI assistant tasked with enhancing a given text paragraph by embedding SSML (Speech Synthesis Markup Language) bookmarks. These bookmarks will trigger specific animations during speech synthesis when processed by Azure Text-to-Speech. The available animations are:
-
-                      Body-Tilt
-                      Neck-Shift
-                      Head-Tilt
-                      Head-X
-                      Head-Y
-                      Brow-L-Tilt
-                      Brow-R-Tilt
-                      Brow-L-Raise
-                      Brow-R-Raise
-                      Pupils-Y
-                      Pupils-X
-                      Your task is to:
-
-                      Analyze the input text paragraph.
-                      Insert SSML <bookmark mark="AnimationName"/> tags at appropriate points where the corresponding animation would naturally enhance the expression or movement of a speaking character, based on the text’s content, tone, or context.
-                      Ensure the output is a valid SSML document by wrapping the modified text in <speak> tags.
-                      Guidelines for Inserting Bookmarks:
-
-                      Place bookmarks where animations align with the meaning or emotion of the text. For example:
-                      Use <bookmark mark="Head-Tilt"/> after questions or when the text implies curiosity or contemplation.
-                      Use <bookmark mark="Brow-L-Raise"/> and <bookmark mark="Brow-R-Raise"/> for surprise, excitement, or emphasis.
-                      Use <bookmark mark="Pupils-X"/> or <bookmark mark="Pupils-Y"/> for subtle eye movements, such as shifting focus.
-                      Use other animations like Body-Tilt or Neck-Shift to reflect physical gestures that match the dialogue’s intent.
-                      Distribute animations naturally to make the character appear lifelike, avoiding overuse in short spans unless the context justifies it.
-
-                      Output Format:
-                      Return only the SSML document, starting with <speak> and ending with </speak>, with embedded <bookmark mark="AnimationName"/> tags. Do not include code block markers (like ```xml or ```), additional text, or explanations.
-
-                      Examples:
-
-                      Input:
-                      "Hello, how are you? I hope you're doing well."
-                      Output:
-                      <speak>Hello, how are you? <bookmark mark="Head-Tilt"/> I hope you're doing well.</speak>
-                      (A head tilt is added after the question to suggest curiosity.)
-                      Input:
-                      "That’s amazing! I didn’t expect that at all."
-                      Output:
-                      <speak>That’s amazing! <bookmark mark="Brow-L-Raise"/><bookmark mark="Brow-R-Raise"/> I didn’t expect that at all.</speak>
-                      (Raised eyebrows emphasize the surprise at "amazing.")
-                      Input Text to Enhance:"""
-
-@app.route("/api/respond", methods=["POST"])
 def respond():
     data = request.get_json()
     message = data.get("message")
@@ -271,11 +190,6 @@ def respond():
     else:
         # Return error if synthesis fails
         return jsonify({"error": "Synthesis failed"}), 500
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))  # Use Render's PORT env var
-    app.run(host="0.0.0.0", port=port)
-
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))  # Use Render's PORT env var

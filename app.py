@@ -51,7 +51,7 @@ system_instruction="""Instruction Prompt for LLM
                       Distribute animations naturally to make the character appear lifelike, avoiding overuse in short spans unless the context justifies it.
 
                       Output Format:
-                      Return only the SSML document, starting with <speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US"> and ending with </speak>, with embedded <bookmark mark="AnimationName"/> tags. Do not include code block markers (like ```xml or ```), additional text, or explanations.
+                      Return only the SSML document, starting with <speak> and ending with </speak>, with embedded <bookmark mark="AnimationName"/> tags.
                       Examples:
 
                       Input:

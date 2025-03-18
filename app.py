@@ -4,8 +4,9 @@ import openai
 import boto3
 import json
 import os
-from google import genai
-from google.genai import types
+#from google import genai
+#from google.genai import types
+import azure.cognitiveservices.speech as speechsdk
 
 app = Flask(__name__)
 
@@ -145,83 +146,149 @@ def respond():
             contents=[message]
         )
 
-    # # Generate response with OpenAI
-    # prompt = f"You are an avatar with a {personality} personality. User says: {message}. Respond:"
-    # response = openai.Completion.create(
-    #     engine="text-davinci-003",
-    #     prompt=prompt,
-    #     max_tokens=50
-    # )
-    # response_text = response.choices[0].text.strip()
 
+    #AZURE LOGIC:  Set up speech configuration
+    subscription_key = os.environ.get("AZURE_API_KEY")
+    region = "canadacentral"
+    speech_config = speechsdk.SpeechConfig(subscription=subscription_key, region=region)
+    speech_config.speech_synthesis_voice_name = "en-US-JennyNeural"  # Similar to Polly's "Joanna"
+
+    # Create speech synthesizer
+    synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config)
+
+    # Initialize list to collect viseme and word timing events
+    events = []
+
+    # Define handler for word boundary events
+    def word_boundary_handler(evt):
+        start_ms = evt.audio_offset / 10000  # Convert ticks to milliseconds
+        duration_ms = evt.duration / 10000   # Convert ticks to milliseconds
+        events.append({
+           "time": start_ms,
+           "duration": duration_ms,
+           "type": "word",
+           "value": evt.text
+        })
+
+    # Define handler for viseme events
+    def viseme_handler(evt):
+        offset_ms = evt.audio_offset / 10000  # Convert ticks to milliseconds
+        events.append({
+            "time": offset_ms,
+            "type": "viseme",
+            "value": evt.viseme_id
+        })
+
+    # Attach event handlers
+    synthesizer.word_boundary.connect(word_boundary_handler)
+    synthesizer.viseme_received.connect(viseme_handler)
+
+    # Synthesize speech from the input text
+    text = aiResponse.text
+    result = synthesizer.speak_text_async(text).get()
+
+    # Check synthesis result and retrieve audio and timings
+    if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
+        # Separate viseme and word events
+        viseme_events = [e for e in events if e["type"] == "viseme"]
+        word_events = [e for e in events if e["type"] == "word"]
+
+        # Format phoneme_timings (viseme timings)
+        phoneme_timings = [
+            {
+                "time": e["time"] / 1000,    # Convert ms to seconds
+                "viseme": e["value"]         # Azure viseme ID (integer)
+            } for e in viseme_events
+        ]
+
+        # Format word_timings with start and end times
+        word_timings = [
+            {
+                "word": e["value"],                   # The word text
+                "start_time": e["time"] / 1000,       # Start time in seconds
+                "end_time": (e["time"] + e["duration"]) / 1000  # End time in seconds
+            } for e in word_events
+        ]
+
+        # Return JSON response
+        return jsonify({
+            "phoneme_timings": phoneme_timings,
+            "word_timings": word_timings
+        })
+    else:
+        # Return error if synthesis fails
+        return jsonify({"error": "Synthesis failed"}), 500
+
+
+    #AMAZON Polly LOGIC:
     # Generate audio with Amazon Polly
-    polly_response = polly_client.synthesize_speech(
-        Text=aiResponse.text,
-        OutputFormat="mp3",
-        VoiceId="Joanna"
-    )
-    audio = polly_response["AudioStream"].read()
-
+#     polly_response = polly_client.synthesize_speech(
+#         Text=aiResponse.text,
+#         OutputFormat="mp3",
+#         VoiceId="Joanna"
+#     )
+#     audio = polly_response["AudioStream"].read()
+#
     # Upload to S3
     audio_key = f"audio/{aiResponse.text[:10]}.mp3"
-    s3_client.put_object(Bucket="aidatingapp-audio", Key=audio_key, Body=audio)
+    s3_client.put_object(Bucket="aidatingapp-audio", Key=audio_key, Body=result.audio_data)
     audio_url = f"https://aidatingapp-audio.s3.amazonaws.com/{audio_key}"
+#
+#     # Get phoneme timings
+#     speech_marks_response = polly_client.synthesize_speech(
+#         Text=aiResponse.text,
+#         OutputFormat="json",
+#         VoiceId="Joanna",
+#         SpeechMarkTypes=["viseme", "word"]  # Request both viseme and word speech marks
+#     )
+#     speech_marks = speech_marks_response["AudioStream"].read().decode().splitlines()
+#
+#     # Separate viseme and word timings
+#     phoneme_timings = []
+#     word_timings = []
 
-    # Get phoneme timings
-    speech_marks_response = polly_client.synthesize_speech(
-        Text=aiResponse.text,
-        OutputFormat="json",
-        VoiceId="Joanna",
-        SpeechMarkTypes=["viseme", "word"]  # Request both viseme and word speech marks
-    )
-    speech_marks = speech_marks_response["AudioStream"].read().decode().splitlines()
+#     for mark in speech_marks:
+#         mark_data = json.loads(mark)
+#         if mark_data["type"] == "viseme":
+#             phoneme_timings.append({
+#                 "time": float(mark_data["time"]) / 1000,  # Convert milliseconds to seconds
+#                 "viseme": mark_data["value"]
+#             })
+#         elif mark_data["type"] == "word":
+#             word_timings.append({
+#                 "word": mark_data["value"],
+#                 "start_time": float(mark_data["time"]) / 1000,
+#                 "end_time": float(mark_data["time"]) / 1000  # Temporary, will adjust later
+#             })
+#
+#     # Adjust end_time for each word
+#     for i in range(len(word_timings) - 1):
+#         word_timings[i]["end_time"] = word_timings[i + 1]["start_time"]
+#
+#     # For the last word, set end_time to the last viseme time
+#     if phoneme_timings:
+#         last_viseme_time = phoneme_timings[-1]["time"]
+#         word_timings[-1]["end_time"] = last_viseme_time
 
-    # Separate viseme and word timings
-    phoneme_timings = []
-    word_timings = []
+#     expressionQuestion = "Sentence: \n"
+#     expressionQuestion += aiResponse.text
+#     expressionQuestion += "\n Word Timings (JSON): \n"
+#     expressionQuestion += json.dumps(word_timings)
 
-    for mark in speech_marks:
-        mark_data = json.loads(mark)
-        if mark_data["type"] == "viseme":
-            phoneme_timings.append({
-                "time": float(mark_data["time"]) / 1000,  # Convert milliseconds to seconds
-                "viseme": mark_data["value"]
-            })
-        elif mark_data["type"] == "word":
-            word_timings.append({
-                "word": mark_data["value"],
-                "start_time": float(mark_data["time"]) / 1000,
-                "end_time": float(mark_data["time"]) / 1000  # Temporary, will adjust later
-            })
-
-    # Adjust end_time for each word
-    for i in range(len(word_timings) - 1):
-        word_timings[i]["end_time"] = word_timings[i + 1]["start_time"]
-
-    # For the last word, set end_time to the last viseme time
-    if phoneme_timings:
-        last_viseme_time = phoneme_timings[-1]["time"]
-        word_timings[-1]["end_time"] = last_viseme_time
-
-    expressionQuestion = "Sentence: \n"
-    expressionQuestion += aiResponse.text
-    expressionQuestion += "\n Word Timings (JSON): \n"
-    expressionQuestion += json.dumps(word_timings)
-
-    expressionJSON = client.models.generate_content(
-        model="gemini-2.0-flash",
-        config=types.GenerateContentConfig(
-            system_instruction=sys_instruct),
-        contents=[expressionQuestion]
-    )
-    print(expressionJSON.text)
+#     expressionJSON = client.models.generate_content(
+#         model="gemini-2.0-flash",
+#         config=types.GenerateContentConfig(
+#             system_instruction=sys_instruct),
+#         contents=[expressionQuestion]
+#     )
+#     print(expressionJSON.text)
 
     # Return audio URL and both sets of timings
     return jsonify({
         "audio_url": audio_url,
         "phoneme_timings": phoneme_timings,
         "word_timings": word_timings,
-        "expression_json": expressionJSON.text
+#         "expression_json": expressionJSON.text
     })
 
 if __name__ == "__main__":

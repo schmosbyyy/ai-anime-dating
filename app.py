@@ -60,8 +60,9 @@ system_instruction="""Instruction Prompt for LLM
                       Use <bookmark mark="Pupils-X"/> or <bookmark mark="Pupils-Y"/> for subtle eye movements, such as shifting focus.
                       Use other animations like Body-Tilt or Neck-Shift to reflect physical gestures that match the dialogue’s intent.
                       Distribute animations naturally to make the character appear lifelike, avoiding overuse in short spans unless the context justifies it.
+
                       Output Format:
-                      Return the text as a valid SSML document, starting with <speak> and ending with </speak>, with embedded <bookmark mark="AnimationName"/> tags. Do not alter the original text content beyond inserting these bookmarks.
+                      Return only the SSML document, starting with <speak> and ending with </speak>, with embedded <bookmark mark="AnimationName"/> tags. Do not include code block markers (like ```xml or ```), additional text, or explanations.
 
                       Examples:
 

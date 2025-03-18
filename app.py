@@ -4,8 +4,8 @@ import openai
 import boto3
 import json
 import os
-#from google import genai
-#from google.genai import types
+from google import genai
+from google.genai import types
 import azure.cognitiveservices.speech as speechsdk
 
 app = Flask(__name__)

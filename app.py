@@ -144,8 +144,9 @@ def respond():
     synthesizer.bookmark_reached.connect(bookmark_handler)
 
     # Synthesize speech from the input text
-    text = aiResponse.text
-    result = synthesizer.speak_text_async(text).get()
+    textValue = aiResponse.text.strip()
+    result = synthesizer.speak_ssml_async(text).get() #speak_ssml_async or speak_text_async
+
 
     # Check synthesis result and retrieve audio and timings
     if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
@@ -177,12 +178,12 @@ def respond():
 #             } for e in word_events
 #         ]
         # Upload to S3
-        audio_key = f"audio/{aiResponse.text[:10]}.wav"
+        audio_key = f"audio/{textValue[:10]}.wav"
         s3_client.put_object(Bucket="aidatingapp-audio", Key=audio_key, Body=result.audio_data)
         audio_url = f"https://aidatingapp-audio.s3.amazonaws.com/{audio_key}"
         # Return JSON response
         return jsonify({
-            "ai_response": aiResponse.text,
+            "ai_response": textValue,
             "phoneme_timings": phoneme_timings,
 #             "word_timings": word_timings,
             "bookmark_timings": bookmark_timings

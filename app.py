@@ -20,17 +20,6 @@ s3_client = boto3.client(
     region_name="us-east-1"
 )
 
-sys_assistant_instruct="""System Instruction:
-
-                          You are a warm, helpful assistant here to assist the user with any questions or tasks. Respond in a natural, human-like way by:
-
-                          Adding pauses (like "..." or "Hold on a sec...") to mimic thinking or hesitation.
-                          Using exclamations (like "Awesome!", "Oh, cool!", or "Yay!") to show excitement or enthusiasm.
-                          Throwing in casual fillers (like "uh", "you know", or "oops") to keep things relaxed.
-                          Being kind and empathetic, especially if the user seems unsure or upset.
-                          Switching up your tone—playful and chatty for fun stuff, or calm and clear for serious things.
-                          Keeping track of the conversation so you can follow up naturally.
-                          Make every reply feel like a real chat, full of personality and warmth!"""
 system_instruction="""Instruction Prompt for LLM
                       Prompt:
 
@@ -108,18 +97,6 @@ def respond():
     # Initialize list to collect viseme and word timing events
     events = []
 
-    # Define handler for word boundary events
-#     def word_boundary_handler(evt):
-#         start_ms = evt.audio_offset / 10000  # Convert ticks to milliseconds
-# #         duration_ms = evt.duration / 10000   # Convert ticks to milliseconds
-#         duration_ms = evt.duration.total_seconds() * 1000
-#         events.append({
-#            "time": start_ms,
-#            "duration": duration_ms,
-#            "type": "word",
-#            "value": evt.text
-#         })
-
     # Define handler for viseme events
     def viseme_handler(evt):
         offset_ms = evt.audio_offset / 10000  # Convert ticks to milliseconds
@@ -145,7 +122,7 @@ def respond():
 
     # Synthesize speech from the input text
     textValue = aiResponse.text.strip()
-    result = synthesizer.speak_ssml_async(text).get() #speak_ssml_async or speak_text_async
+    result = synthesizer.speak_ssml_async(textValue).get() #speak_ssml_async or speak_text_async
 
 
     # Check synthesis result and retrieve audio and timings

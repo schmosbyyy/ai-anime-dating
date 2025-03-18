@@ -182,6 +182,10 @@ def respond():
         s3_client.put_object(Bucket="aidatingapp-audio", Key=audio_key, Body=result.audio_data)
         audio_url = f"https://aidatingapp-audio.s3.amazonaws.com/{audio_key}"
         # Return JSON response
+        print(textValue)
+        print(phoneme_timings)
+        print(bookmark_timings)
+
         return jsonify({
             "ai_response": textValue,
             "phoneme_timings": phoneme_timings,

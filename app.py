@@ -125,7 +125,7 @@ def respond():
         textValue = textValue.split('\n', 1)[1].rsplit('\n', 1)[0]
     # Ensure proper SSML header
     if not textValue.startswith('<speak version='):
-        textValue = '<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US">' + textValue[7:-8] + '</speak>'
+        textValue = '<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US"><voice name="en-US-JennyNeural">' + textValue[7:-8] + '</voice></speak>'
     print("SSML to synthesize:", textValue)
     result = synthesizer.speak_ssml_async(textValue).get() #speak_ssml_async or speak_text_async
     print("Synthesis result reason:", result.reason)

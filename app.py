@@ -164,7 +164,11 @@ def respond():
         })
     else:
         # Return error if synthesis fails
-        print("Error: ", result.reason)
+        error_message = f"Synthesis failed with reason: {result.reason}"
+        if result.reason == speechsdk.ResultReason.Canceled:
+            cancellation_details = speechsdk.SpeechSynthesisCancellationDetails.from_result(result)
+            error_message += f", ErrorCode: {cancellation_details.error_code}, Details: {cancellation_details.error_details}"
+        print("Error:", error_message)
         return jsonify({"error": "Synthesis failed"}), 500
 
 if __name__ == "__main__":

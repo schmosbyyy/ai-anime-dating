@@ -57,7 +57,7 @@ system_instruction="""Instruction Prompt for LLM
                       Input:
                       "Hello, how are you? I hope you're doing well."
                       Output:
-                      <speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis">Hello, how are you? <bookmark mark="Head-Tilt"/> I hope you're doing well.</speak>
+                      <speak>Hello, how are you? <bookmark mark="Head-Tilt"/> I hope you're doing well.</speak>
                       (A head tilt is added after the question to suggest curiosity.)
                       Input:
                       "That’s amazing! I didn’t expect that at all."

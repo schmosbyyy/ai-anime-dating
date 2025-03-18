@@ -84,7 +84,7 @@ def respond():
     personality = data.get("personality", "friendly")
 
     client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
-    question += "Input:\n"
+    question = "Input:\n"
     question += message
     question += "\n Please generate the SSML-enhanced text based on this input."
     aiResponse = client.models.generate_content(

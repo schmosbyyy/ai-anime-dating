@@ -154,7 +154,7 @@ def respond():
     speech_config.speech_synthesis_voice_name = "en-US-JennyNeural"  # Similar to Polly's "Joanna"
 
     # Create speech synthesizer
-    synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config)
+    synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=None)
 
     # Initialize list to collect viseme and word timing events
     events = []
@@ -162,7 +162,8 @@ def respond():
     # Define handler for word boundary events
     def word_boundary_handler(evt):
         start_ms = evt.audio_offset / 10000  # Convert ticks to milliseconds
-        duration_ms = evt.duration / 10000   # Convert ticks to milliseconds
+#         duration_ms = evt.duration / 10000   # Convert ticks to milliseconds
+        duration_ms = evt.duration.total_seconds() * 1000
         events.append({
            "time": start_ms,
            "duration": duration_ms,
@@ -211,7 +212,7 @@ def respond():
             } for e in word_events
         ]
         # Upload to S3
-        audio_key = f"audio/{aiResponse.text[:10]}.mp3"
+        audio_key = f"audio/{aiResponse.text[:10]}.wav"
         s3_client.put_object(Bucket="aidatingapp-audio", Key=audio_key, Body=result.audio_data)
         audio_url = f"https://aidatingapp-audio.s3.amazonaws.com/{audio_key}"
         # Return JSON response

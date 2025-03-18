@@ -158,7 +158,7 @@ def respond():
     polly_response = polly_client.synthesize_speech(
         Text=aiResponse.text,
         OutputFormat="mp3",
-        VoiceId="Danielle"
+        VoiceId="Kendra"
     )
     audio = polly_response["AudioStream"].read()
 
@@ -171,7 +171,7 @@ def respond():
     speech_marks_response = polly_client.synthesize_speech(
         Text=aiResponse.text,
         OutputFormat="json",
-        VoiceId="Danielle",
+        VoiceId="Kendra",
         SpeechMarkTypes=["viseme", "word"]  # Request both viseme and word speech marks
     )
     speech_marks = speech_marks_response["AudioStream"].read().decode().splitlines()

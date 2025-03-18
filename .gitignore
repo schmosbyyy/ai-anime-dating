@@ -6,3 +6,8 @@ __pycache__
 env/
 venv/
 .env
+/.idea/.gitignore
+/.idea/ai-anime-dating.iml
+/.idea/modules.xml
+/.idea/php.xml
+/.idea/vcs.xml

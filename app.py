@@ -284,12 +284,12 @@ def respond():
 #     print(expressionJSON.text)
 
     # Return audio URL and both sets of timings
-    return jsonify({
-        "audio_url": audio_url,
-        "phoneme_timings": phoneme_timings,
-        "word_timings": word_timings,
-#         "expression_json": expressionJSON.text
-    })
+#     return jsonify({
+#         "audio_url": audio_url,
+#         "phoneme_timings": phoneme_timings,
+#         "word_timings": word_timings,
+# #         "expression_json": expressionJSON.text
+#     })
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))  # Use Render's PORT env var

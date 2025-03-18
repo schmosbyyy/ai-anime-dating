@@ -118,7 +118,6 @@ def respond():
     # Initialize list to collect viseme and word timing events
     events = []
 
-    # Define handler for viseme events
     def viseme_handler(evt):
         offset_ms = evt.audio_offset / 10000  # Convert ticks to milliseconds
         events.append({
@@ -127,7 +126,6 @@ def respond():
             "value": evt.viseme_id
         })
 
-    # Define handler for Bookmark events
     def bookmark_handler(evt):
         offset_ms = evt.audio_offset / 10000  # Convert from ticks (100-ns units) to milliseconds
         events.append({
@@ -137,7 +135,6 @@ def respond():
         })
 
     # Attach event handlers
-#     synthesizer.synthesis_word_boundary.connect(word_boundary_handler)
     synthesizer.viseme_received.connect(viseme_handler)
     synthesizer.bookmark_reached.connect(bookmark_handler)
 
@@ -174,15 +171,9 @@ def respond():
             for event in bookmark_events
         ]
 
-        # Upload to S3
-#         audio_key = f"audio/{textValue[:10]}.wav"
-#         s3_client.put_object(Bucket="aidatingapp-audio", Key=audio_key, Body=result.audio_data)
-#         audio_url = f"https://aidatingapp-audio.s3.amazonaws.com/{audio_key}"
-        # Return JSON response
         audio_data = result.audio_data  # Binary audio data
+        audio_base64 = base64.b64encode(audio_data).decode('utf-8')# Convert audio data to base64 string
 
-        # Convert audio data to base64 string
-        audio_base64 = base64.b64encode(audio_data).decode('utf-8')
         return jsonify({
             "audio_url": audio_base64,
             "ai_response": textValue,

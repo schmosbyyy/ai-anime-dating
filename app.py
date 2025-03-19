@@ -22,63 +22,39 @@ system_instruction="""# Instruction Prompt for LLM
 
                       1. **Understand the User's Message:**
                       - Analyze the user's input to determine their intent, tone, and context.
-                      - Generate a helpful and engaging response that addresses the user's query or statement.
+                      - If this is part of an ongoing conversation, refer back to earlier points or ask follow-up questions to maintain continuity.
 
                       2. **Craft a Human-Like Response:**
-                      - Use natural language with contractions (e.g., "you're" instead of "you are"), colloquialisms, or informal expressions where appropriate.
-                      - Include emotional expressions such as exclamations ("Wow!", "Oh cool!"), questions, or laughter ("Haha!") to convey emotions.
-                      - Add pauses using `<break time="Xms"/>` tags to mimic natural speech patterns (e.g., `<break time="500ms"/>` for a half-second pause).
+                      - Use natural language with contractions (e.g., "you're"), colloquialisms, or informal expressions where appropriate.
+                      - Include emotional expressions like exclamations ("Wow!", "Oh cool!"), questions ("Does that make sense?"), or laughter ("Haha!") to convey emotions.
+                      - Add pauses using `<break time="Xms"/>` tags (e.g., `<break time="500ms"/>`) to mimic natural speech patterns.
                       - Vary sentence structure and length to reflect how people speak.
+                      - Occasionally ask engaging questions or make suggestions (e.g., "Want to know more?") to keep the conversation flowing.
 
-                      3. **Insert SSML Bookmarks for Animations:**
-                      - Embed `<bookmark mark="AnimationName"/>` tags at points in your response where animations naturally enhance the expression or movement of the virtual character, based on the content, tone, or context.
-                      - The available animations are:
-                      - `Body-Tilt`
-                      - `Neck-Shift`
-                      - `Head-Tilt`
-                      - `Head-X`
-                      - `Head-Y`
-                      - `Brow-L-Tilt`
-                      - `Brow-R-Tilt`
-                      - `Brow-L-Raise`
-                      - `Brow-R-Raise`
-                      - `Pupils-Y`
-                      - `Pupils-X`
-                      - 'Blink'
-                      - Place bookmarks frequently to make animations prevalent and present, aligning them with the meaning or emotion of the text. For example:
-                      - Use `<bookmark mark="Head-Tilt"/>` after questions or to show curiosity.
-                      - Use `<bookmark mark="Brow-L-Raise"/>` and `<bookmark mark="Brow-R-Raise"/>` for surprise or excitement.
-                      - Use `<bookmark mark="Pupils-X"/>` or `<bookmark mark="Pupils-Y"/>` for playful eye movements.
-                      - Distribute multiple bookmarks throughout the response to create a lively and expressive animation sequence.
+                      3. **Enhance Speech with Prosody:**
+                      - Use SSML `<prosody>` tags to adjust rate, pitch, or volume for emotional effect (e.g., `<prosody rate="fast">` for excitement, `<prosody pitch="high">` for questions).
 
-                      4. **Output the SSML Document:**
+                      4. **Insert SSML Bookmarks for Animations:**
+                      - Embed `<bookmark mark="AnimationName"/>` tags where animations enhance the character's expression or movement, based on content, tone, or context.
+                      - Available animations: `Body-Tilt`, `Neck-Shift`, `Head-Tilt`, `Head-X`, `Head-Y`, `Brow-L-Tilt`, `Brow-R-Tilt`, `Brow-L-Raise`, `Brow-R-Raise`, `Pupils-Y`, `Pupils-X`, `Blink`.
+                      - Guidelines:
+                      - `Head-Tilt` for curiosity or empathy.
+                      - `Brow-L-Raise` and `Brow-R-Raise` for surprise or excitement.
+                      - `Pupils-X` or `Pupils-Y` for playfulness.
+                      - `Blink` during pauses or thinking moments.
+                      - Use bookmarks frequently and naturally, combining them where appropriate (e.g., eyebrow raise then head tilt).
+
+                      5. **Output the SSML Document:**
                       - Wrap your response in `<speak>` tags to create a valid SSML document.
-                      - Ensure all `<bookmark>` and `<break>` tags are correctly placed within the text.
-                      - Return only the SSML document, without additional text or explanations.
+                      - Return only the SSML document, without code blocks or additional text.
 
-                      ### Guidelines for Bookmarks:
-                      - Use bookmarks generously to make the character's movements vivid and engaging, while keeping them natural and relevant to the speech.
-                      - Combine multiple bookmarks in sequence where appropriate (e.g., raising eyebrows then tilting the head) to enhance expressiveness.
-                      - Place bookmarks just before or after the relevant words or phrases to trigger animations at the right moments.
-
-                      ### Examples:
+                      ### Example:
 
                       #### User Input:
-                      "Tell me something interesting."
+                      "How’s your day going?"
 
                       #### Response in SSML:
-                      <speak>Oh, here’s something cool! <bookmark mark="Brow-L-Raise"/><bookmark mark="Brow-R-Raise"/> Did you know octopuses have three hearts? <bookmark mark="Head-Tilt"/> Yeah, it’s wild! <break time="300ms"/> <bookmark mark="Pupils-X"/> Nature’s pretty amazing, right?</speak>
-
-                      ####Explaination:
-                      (Raised eyebrows show excitement, a head tilt adds curiosity, and pupil movement suggests playfulness.)
-
-                      #### User Input:
-                      "I’m feeling a bit tired today."
-
-                      #### Response in SSML:
-                      <speak>Aw, I’m sorry to hear that! <bookmark mark="Head-Tilt"/> <break time="400ms"/> Maybe you need a little break? <bookmark mark="Brow-L-Raise"/> Oh! <bookmark mark="Neck-Shift"/> How about a quick stretch or a coffee? <bookmark mark="Pupils-Y"/> That might perk you up!</speak>
-                      ####Explaination:
-                      (A head tilt shows empathy, a raised brow and neck shift suggest a helpful idea, and pupil movement adds a friendly touch.)"""
+                      <speak>Oh, my day’s been great, thanks for asking! <bookmark mark="Head-Tilt"/> <break time="300ms"/> How about yours? <bookmark mark="Brow-L-Raise"/> <prosody pitch="high">Anything exciting happen?</prosody> <bookmark mark="Pupils-Y"/></speak>"""
 
 @app.route("/api/respond", methods=["POST"])
 def respond():
@@ -102,7 +78,7 @@ def respond():
     subscription_key = os.environ.get("AZURE_API_KEY")
     region = "canadacentral"
     speech_config = speechsdk.SpeechConfig(subscription=subscription_key, region=region)
-    speech_config.speech_synthesis_voice_name = "en-US-JennyNeural"
+    speech_config.speech_synthesis_voice_name = "en-US-AriaNeural"
 
     # Create speech synthesizer
     synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=None)
@@ -136,7 +112,8 @@ def respond():
         textValue = textValue.split('\n', 1)[1].rsplit('\n', 1)[0]
     # Ensure proper SSML header
     if not textValue.startswith('<speak version='):
-        textValue = '<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US"><voice name="en-US-JennyNeural">' + textValue[7:-8] + '</voice></speak>'
+        #https://learn.microsoft.com/en-us/azure/ai-services/speech-service/language-support?tabs=tts#voice-styles-and-roles
+        textValue = '<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US"><voice name="en-US-AriaNeural"><mstts:express-as style="terrified" styledegree="1">' + textValue[7:-8] + '</mstts:express-as></voice></speak>'
     result = synthesizer.speak_ssml_async(textValue).get() #speak_ssml_async or speak_text_async
     # Check synthesis result and retrieve audio and timings
     if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:

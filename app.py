@@ -152,8 +152,7 @@ def respond():
         if result.reason == speechsdk.ResultReason.Canceled:
             cancellation_details = speechsdk.SpeechSynthesisCancellationDetails(result)
             error_message += f", ErrorCode: {cancellation_details.error_code}, Details: {cancellation_details.error_details}"
-        print("Error:", error_message)
-        return jsonify({"error": "Synthesis failed"}), 500
+        return jsonify({"error": "Synthesis failed", "details": error_message}), 500
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))  # Use Render's PORT env var

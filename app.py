@@ -44,6 +44,7 @@ system_instruction="""# Instruction Prompt for LLM
                       - `Brow-R-Raise`
                       - `Pupils-Y`
                       - `Pupils-X`
+                      - 'Blink'
                       - Place bookmarks frequently to make animations prevalent and present, aligning them with the meaning or emotion of the text. For example:
                       - Use `<bookmark mark="Head-Tilt"/>` after questions or to show curiosity.
                       - Use `<bookmark mark="Brow-L-Raise"/>` and `<bookmark mark="Brow-R-Raise"/>` for surprise or excitement.

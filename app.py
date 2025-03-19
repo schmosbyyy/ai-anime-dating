@@ -60,7 +60,7 @@ system_instruction="""# Instruction Prompt for LLM
 def respond():
     data = request.get_json()
     message = data.get("message")
-    personality = data.get("personality", "friendly")
+    personality = data.get("personality", "cheerful")
 
     client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
     question = "User Input:\n"
@@ -70,6 +70,7 @@ def respond():
             model="gemini-2.0-flash",
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction), #using the SSML instructions prompt here
+                #Add temprature for variability
             contents=[question] #send the user input
         )
 
@@ -113,7 +114,7 @@ def respond():
     # Ensure proper SSML header
     if not textValue.startswith('<speak version='):
         #https://learn.microsoft.com/en-us/azure/ai-services/speech-service/language-support?tabs=tts#voice-styles-and-roles
-        textValue = '<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="https://www.w3.org/2001/mstts" xml:lang="en-US"><voice name="en-US-AriaNeural"><mstts:express-as style="terrified" styledegree="2">' + textValue[7:-8] + '</mstts:express-as></voice></speak>'
+        textValue = '<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="https://www.w3.org/2001/mstts" xml:lang="en-US"><voice name="en-US-AriaNeural"><mstts:express-as style="' + personality + '" styledegree="1">' + textValue[7:-8] + '</mstts:express-as></voice></speak>'
     result = synthesizer.speak_ssml_async(textValue).get() #speak_ssml_async or speak_text_async
     # Check synthesis result and retrieve audio and timings
     if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:

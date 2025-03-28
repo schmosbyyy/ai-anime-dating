@@ -27,9 +27,9 @@ system_instruction_split_context="""# Instruction Prompt for LLM
 
                     #### Output Segments:
 
-                         "The sun rises over a quiet village. Birds chirp as villagers begin their day."
-                         "A young boy runs through the fields, chasing a kite."
-                         "Dark clouds gather, and thunder rumbles in the distance.""""
+                         'The sun rises over a quiet village. Birds chirp as villagers begin their day.'
+                         'A young boy runs through the fields, chasing a kite.'
+                         'Dark clouds gather, and thunder rumbles in the distance.'"""
 system_instruction_directResponse="""# Instruction Prompt for LLM
 
                       ## Prompt:

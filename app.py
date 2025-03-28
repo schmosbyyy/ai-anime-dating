@@ -123,6 +123,14 @@ def respond():
     splitContext = ""
     question = "User Input:\n"
     question += message
+    if(getScriptContext):
+        splitContext = client.models.generate_content(
+                        model="gemini-2.0-flash",
+                        config=types.GenerateContentConfig(
+                            system_instruction=system_instruction_split_context), #using the Split context instruction here
+                            #Add temprature for variability
+                        contents=[question] #send the user input
+            )
     question += "\n Please generate the SSML-enhanced text based on this input."
     if(getAiResponse):
         aiResponse = client.models.generate_content(
@@ -139,14 +147,6 @@ def respond():
                     system_instruction=system_instruction_directResponse), #using the SSML instructions prompt here
                     #Add temprature for variability
                 contents=[question] #send the user input
-            )
-    if(getScriptContext):
-        splitContext = client.models.generate_content(
-                        model="gemini-2.0-flash",
-                        config=types.GenerateContentConfig(
-                            system_instruction=system_instruction_split_context), #using the Split context instruction here
-                            #Add temprature for variability
-                        contents=[question] #send the user input
             )
     #AZURE LOGIC:  Set up speech configuration
     subscription_key = os.environ.get("AZURE_API_KEY")

@@ -251,6 +251,7 @@ def respond():
             return []
 
     outputImagePrompts = convert_response_to_list(splitContext.text)
+    print("outputImagePrompts:", outputImagePrompts)
     sentences = outputImagePrompts.segments
     style = outputImagePrompts.script_scene_style
     #AZURE LOGIC:  Set up speech configuration

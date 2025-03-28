@@ -155,6 +155,17 @@ def respond():
                     #Add temprature for variability
                 contents=[question] #send the user input
             )
+    def convert_response_to_list(input_json):
+        match = re.search(r'\[([\s\S]*)\]', input_json)  # Extract JSON array part
+        if not match:
+            return []
+        try:
+            return json.loads(match.group(0))  # Parse JSON array
+        except json.JSONDecodeError as e:
+            print("Parsing error:", e)
+            return []
+
+    sentences = convert_response_to_list(splitContext.text)
     #AZURE LOGIC:  Set up speech configuration
     subscription_key = os.environ.get("AZURE_API_KEY")
     region = "canadacentral"
@@ -226,7 +237,7 @@ def respond():
             "ai_response": textValue,
             "phoneme_timings": phoneme_timings,
             "bookmark_timings": bookmark_timings,
-            "splitContext": splitContext.text,
+            "splitContext": sentences,
         })
     else:
         # Return error if synthesis fails

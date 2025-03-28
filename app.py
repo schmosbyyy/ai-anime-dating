@@ -241,19 +241,24 @@ def respond():
                 contents=[question] #send the user input
             )
     def convert_response_to_list(input_json):
-        match = re.search(r'\[([\s\S]*)\]', input_json)  # Extract JSON array part
-        if not match:
-            return []
         try:
-            return json.loads(match.group(0))  # Parse JSON array
+            # Parse the entire JSON string into a Python dictionary
+            data = json.loads(input_json)
+            # Extract segments and script_scene_style
+            segments = data.get('segments', [])  # Default to empty list if missing
+            style = data.get('script_scene_style', 'realistic')  # Default to 'realistic' if missing
+            return segments, style  # Return both as a tuple
         except json.JSONDecodeError as e:
             print("Parsing error:", e)
-            return []
+            return [], 'realistic'  # Return defaults on error
 
+    # Usage
+    print("splitContext.text:", splitContext.text)
     outputImagePrompts = convert_response_to_list(splitContext.text)
     print("outputImagePrompts:", outputImagePrompts)
-    sentences = outputImagePrompts.segments
-    style = outputImagePrompts.script_scene_style
+    sentences, style = outputImagePrompts  # Unpack the tuple
+    print("Sentences:", sentences)
+    print("Style:", style)
     #AZURE LOGIC:  Set up speech configuration
     subscription_key = os.environ.get("AZURE_API_KEY")
     region = "canadacentral"

@@ -258,12 +258,8 @@ def respond():
             return [], 'realistic'  # Return defaults on error
 
     # Usage
-    print("splitContext.text:", splitContext.text)
     outputImagePrompts = convert_response_to_list(splitContext.text)
-    print("outputImagePrompts:", outputImagePrompts)
     sentences, style = outputImagePrompts  # Unpack the tuple
-    print("Sentences:", sentences)
-    print("Style:", style)
     #AZURE LOGIC:  Set up speech configuration
     subscription_key = os.environ.get("AZURE_API_KEY")
     region = "canadacentral"

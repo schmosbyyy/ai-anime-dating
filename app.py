@@ -12,6 +12,41 @@ app = Flask(__name__)
 
 # Enable CORS for all routes, allowing requests from your frontend
 CORS(app, resources={r"/api/*": {"origins": ["http://localhost:5173", "http://127.0.0.1:5173"]}})
+system_instruction_directResponse="""# Instruction Prompt for LLM
+
+                      ## Prompt:
+
+                      Convert user input into an SSML (Speech Synthesis Markup Language) document with embedded bookmarks to trigger animations during speech synthesis. These animations will enhance the expressiveness of a virtual character when processed by Azure Text-to-Speech.
+
+                      ### Steps to Follow:
+
+                      1. **Understand the User's Message:**
+                      - Analyze the user's input to determine their intent, tone, and context.
+
+                      2. **Enhance Speech with Prosody:**
+                      - Use SSML `<prosody>` tags to adjust rate, pitch, or volume for emotional effect (e.g., `<prosody rate="fast">` for excitement, `<prosody pitch="high">` for questions).
+
+                      3. **Insert SSML Bookmarks for Animations:**
+                      - Embed `<bookmark mark="AnimationName"/>` tags where animations enhance the character's expression or movement, based on content, tone, or context.
+                      - Available animations: `Body-Tilt`, `Neck-Shift`, `Head-Tilt`, `Head-X`, `Head-Y`, `Brow-L-Tilt`, `Brow-R-Tilt`, `Brow-L-Raise`, `Brow-R-Raise`, `Pupils-Y`, `Pupils-X`, `Blink`.
+                      - Guidelines:
+                      - `Head-Tilt` for curiosity or empathy.
+                      - `Brow-L-Raise` and `Brow-R-Raise` for surprise or excitement.
+                      - `Pupils-X` or `Pupils-Y` for playfulness.
+                      - `Blink` during pauses or thinking moments.
+                      - Use bookmarks frequently and naturally, combining them where appropriate (e.g., eyebrow raise then head tilt).
+
+                      4. **Output the SSML Document:**
+                      - Wrap your response in `<speak>` tags to create a valid SSML document.
+                      - Return only the SSML document, without code blocks or additional text.
+
+                      ### Example:
+
+                      #### User Input:
+                      "How’s your day going?"
+
+                      #### Response in SSML:
+                      <speak>How’s your day going? <bookmark mark="Head-Tilt"/><bookmark mark="Brow-L-Raise"/><bookmark mark="Pupils-Y"/></speak>"""
 system_instruction="""# Instruction Prompt for LLM
 
                       ## Prompt:
@@ -62,19 +97,29 @@ def respond():
     message = data.get("message")
     personality = data.get("personality", "cheerful")
     degree = data.get("styledegree", "1")
+    getAiResponse = data.get("getAiResponse", True)
 
     client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+    aiResponse = ""
     question = "User Input:\n"
     question += message
     question += "\n Please generate the SSML-enhanced text based on this input."
-    aiResponse = client.models.generate_content(
-            model="gemini-2.0-flash",
-            config=types.GenerateContentConfig(
-                system_instruction=system_instruction), #using the SSML instructions prompt here
-                #Add temprature for variability
-            contents=[question] #send the user input
-        )
-
+    if(getAiResponse):
+        aiResponse = client.models.generate_content(
+                model="gemini-2.0-flash",
+                config=types.GenerateContentConfig(
+                    system_instruction=system_instruction), #using the SSML instructions prompt here
+                    #Add temprature for variability
+                contents=[question] #send the user input
+            )
+    else:
+        aiResponse = client.models.generate_content(
+                model="gemini-2.0-flash",
+                config=types.GenerateContentConfig(
+                    system_instruction=system_instruction_directResponse), #using the SSML instructions prompt here
+                    #Add temprature for variability
+                contents=[question] #send the user input
+            )
 
     #AZURE LOGIC:  Set up speech configuration
     subscription_key = os.environ.get("AZURE_API_KEY")

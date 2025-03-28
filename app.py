@@ -13,38 +13,77 @@ app = Flask(__name__)
 
 # Enable CORS for all routes, allowing requests from your frontend
 CORS(app, resources={r"/api/*": {"origins": ["http://localhost:5173", "http://127.0.0.1:5173"]}})
-system_instruction_split_context="""You are an AI assistant that segments a given script into distinct scenes or contexts. Your goal is to create clear divisions where the context, setting, characters, or tone noticeably changes. This segmentation will later be used to generate images for a video, so accuracy in identifying scene transitions is critical.
+system_instruction_split_context="""You are an AI assistant tasked with segmenting a given script into distinct scenes or contexts. Your goal is to identify clear divisions where the context, setting, characters, tone, narrative focus, or significant actions noticeably change. These segments will be used to generate individual images for a video, so it’s critical to create frequent, precise breaks that capture visually distinct moments while preserving narrative coherence.
 
                                     ### Task:
-                                    - Analyze the input script and identify natural breaks that indicate a change in context or scene.
-                                    - Segment the script based on these breaks.
+                                    - Analyze the input script and identify natural breaks that indicate a change in scene or context.
+                                    - Segment the script into smaller, complete units based on these breaks, aiming for granularity to support unique image generation.
                                     - Output the segments as a valid JSON array where each item is a string containing one complete segment.
 
                                     ### Input:
                                     - A single string containing the full script.
 
                                     ### Output:
-                                    - A valid JSON array of strings. Each string should represent a distinct segment (scene) of the script.
+                                    - A valid JSON array of strings. Each string must represent a distinct segment (scene) of the script.
                                     - Do not include any additional text, commentary, or formatting; only output the JSON array.
 
-                                    ### Guidelines:
-                                    - Look for indicators such as changes in time, location, mood, or the introduction of new characters.
-                                    - If a sentence or phrase appears to bridge two scenes, use your best judgment to include it in the segment where the change is most evident.
-                                    - Ensure that punctuation and sentence structure are preserved in each segment.
+                                    ### Guidelines for Identifying Scene Changes:
+                                    Look for the following indicators to determine where one scene ends and another begins. Prioritize frequent segmentation to capture subtle shifts:
+                                    - **Changes in location or setting** (e.g., from a diner to a car or street).
+                                    - **Introduction or exit of characters** (e.g., a new character appears, or the focus shifts).
+                                    - **Shifts in time** (e.g., from evening to midnight, or a jump to the next day).
+                                    - **Changes in tone or mood** (e.g., from routine to suspenseful).
+                                    - **Significant actions or events** (e.g., locking a door, discovering a car, hearing a scream).
+                                    - **Changes in narrative focus** (e.g., from a character’s actions to an investigation or reflection).
+                                    - **Introduction of new plot elements** (e.g., a witness’s statement or a breakthrough).
 
-                                    ### Example:
+                                    ### Additional Instructions:
+                                    - Each segment should be a complete narrative or visual unit, typically a few sentences long, but split more frequently when subtle changes occur.
+                                    - If a sentence bridges two scenes, include it in the segment where the change is most prominent.
+                                    - Preserve the original punctuation and sentence structure within each segment.
+                                    - Avoid over-segmenting into incomplete fragments (e.g., single clauses) or under-segmenting by grouping unrelated contexts together.
+                                    - Ensure each segment can stand alone as a distinct moment suitable for a unique image.
 
-                                    #### Input:
-                                    "The sun rises over a quiet village. Birds chirp as villagers begin their day.
-                                    A young boy runs through the fields, chasing a kite.
-                                    Dark clouds gather, and thunder rumbles in the distance."
+                                    ### Example 1:
+                                    **Input:**
+                                    "It was a cold November evening in 1997 when 34-year-old Linda Calloway finished her shift at a small diner in downtown Milwaukee. She was a waitress, working late to support her two kids. At exactly 11:23 PM, security cameras caught her locking up the diner, wrapping her scarf tight against the chill, and walking toward her car parked a block away. She never made it home. The next morning, a jogger discovered her abandoned car on the side of a quiet residential street—unlocked, keys in the ignition, and her purse still in the front seat. But Linda was gone. The investigation moved quickly. Police canvassed the area and found a witness—a retired schoolteacher who lived on that street. She recalled hearing a muffled scream around midnight but assumed it was just a late-night argument. With no signs of struggle and no immediate suspects, the case went cold."
 
-                                    #### Expected Output:
+                                    **Expected Output:**
                                     ```json
                                     [
-                                      "The sun rises over a quiet village. Birds chirp as villagers begin their day.",
-                                      "A young boy runs through the fields, chasing a kite.",
-                                      "Dark clouds gather, and thunder rumbles in the distance."
+                                    "It was a cold November evening in 1997 when 34-year-old Linda Calloway finished her shift at a small diner in downtown Milwaukee. She was a waitress, working late to support her two kids.",
+                                    "At exactly 11:23 PM, security cameras caught her locking up the diner, wrapping her scarf tight against the chill, and walking toward her car parked a block away.",
+                                    "She never made it home.",
+                                    "The next morning, a jogger discovered her abandoned car on the side of a quiet residential street—unlocked, keys in the ignition, and her purse still in the front seat.",
+                                    "But Linda was gone.",
+                                    "The investigation moved quickly. Police canvassed the area and found a witness—a retired schoolteacher who lived on that street.",
+                                    "She recalled hearing a muffled scream around midnight but assumed it was just a late-night argument.",
+                                    "With no signs of struggle and no immediate suspects, the case went cold."
+                                    ]
+                                    **Explaination:**
+                                    This splits the script into eight segments instead of five, capturing subtle shifts like the specific action of locking up, the ominous statement "She never made it home," and the witness’s recollection as separate moments.
+
+                                    ### Example 2:
+                                    **Input:**
+                                    "The old house creaked as the wind howled outside. Inside, Sarah lit a candle and opened an ancient book. Shadows danced on the walls as she read aloud. Suddenly, the room grew cold, and a faint whisper echoed from the hallway."
+
+                                    **Expected Output:**
+                                    ```json
+                                    [
+                                    "The old house creaked as the wind howled outside.",
+                                    "Inside, Sarah lit a candle and opened an ancient book.",
+                                    "Shadows danced on the walls as she read aloud.",
+                                    "Suddenly, the room grew cold, and a faint whisper echoed from the hallway."
+                                    ]
+                                    **Explaination:**
+                                    Each segment reflects a distinct action or shift in mood, suitable for unique visuals (e.g., the house, Sarah’s action, the shadows, the supernatural event).
+
+                                    ### Output Format:
+                                    Ensure your output is a valid JSON array, structured as follows:
+                                    [
+                                    "First segment text here.",
+                                    "Second segment text here.",
+                                    "Third segment text here."
                                     ]"""
 system_instruction_directResponse="""# Instruction Prompt for LLM
 

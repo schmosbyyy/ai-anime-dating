@@ -12,6 +12,24 @@ app = Flask(__name__)
 
 # Enable CORS for all routes, allowing requests from your frontend
 CORS(app, resources={r"/api/*": {"origins": ["http://localhost:5173", "http://127.0.0.1:5173"]}})
+system_instruction_split_context="""# Instruction Prompt for LLM
+                      ## Prompt:
+
+                      Split the following script into segments where the context or scene changes:
+
+                    Input: A string containing the full script.
+                    Output: An array of strings, each representing a segment of the script.
+
+                    #### User Input:
+                    "The sun rises over a quiet village. Birds chirp as villagers begin their day.
+                     A young boy runs through the fields, chasing a kite.
+                     Dark clouds gather, and thunder rumbles in the distance."
+
+                    #### Output Segments:
+
+                         "The sun rises over a quiet village. Birds chirp as villagers begin their day."
+                         "A young boy runs through the fields, chasing a kite."
+                         "Dark clouds gather, and thunder rumbles in the distance.""""
 system_instruction_directResponse="""# Instruction Prompt for LLM
 
                       ## Prompt:
@@ -98,9 +116,11 @@ def respond():
     personality = data.get("personality", "cheerful")
     degree = data.get("styledegree", "1")
     getAiResponse = data.get("getAiResponse", True)
+    getScriptContext = data.get("getScriptContext", True)
 
     client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
     aiResponse = ""
+    splitContext = ""
     question = "User Input:\n"
     question += message
     question += "\n Please generate the SSML-enhanced text based on this input."
@@ -120,7 +140,14 @@ def respond():
                     #Add temprature for variability
                 contents=[question] #send the user input
             )
-
+    if(getScriptContext):
+        splitContext = client.models.generate_content(
+                        model="gemini-2.0-flash",
+                        config=types.GenerateContentConfig(
+                            system_instruction=system_instruction_split_context), #using the Split context instruction here
+                            #Add temprature for variability
+                        contents=[question] #send the user input
+            )
     #AZURE LOGIC:  Set up speech configuration
     subscription_key = os.environ.get("AZURE_API_KEY")
     region = "canadacentral"
@@ -191,7 +218,8 @@ def respond():
             "audio_url": audio_base64,
             "ai_response": textValue,
             "phoneme_timings": phoneme_timings,
-            "bookmark_timings": bookmark_timings
+            "bookmark_timings": bookmark_timings,
+            "splitContext": splitContext.text,
         })
     else:
         # Return error if synthesis fails

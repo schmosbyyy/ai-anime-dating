@@ -243,7 +243,12 @@ def respond():
     def convert_response_to_list(input_json):
         try:
             # Parse the entire JSON string into a Python dictionary
-            data = json.loads(input_json)
+            cleaned_input = input_json.strip()
+            if cleaned_input.startswith('```json') and cleaned_input.endswith('```'):
+                cleaned_input = cleaned_input[7:-3].strip()  # Remove ```json and ```
+            elif cleaned_input.startswith('```') and cleaned_input.endswith('```'):
+                cleaned_input = cleaned_input[3:-3].strip()  # Remove plain ```
+            data = json.loads(cleaned_input)
             # Extract segments and script_scene_style
             segments = data.get('segments', [])  # Default to empty list if missing
             style = data.get('script_scene_style', 'realistic')  # Default to 'realistic' if missing

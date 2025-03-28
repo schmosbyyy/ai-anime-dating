@@ -4,6 +4,7 @@ import base64
 import openai
 import json
 import os
+import re
 from google import genai
 from google.genai import types
 import azure.cognitiveservices.speech as speechsdk

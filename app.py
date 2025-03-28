@@ -12,24 +12,31 @@ app = Flask(__name__)
 
 # Enable CORS for all routes, allowing requests from your frontend
 CORS(app, resources={r"/api/*": {"origins": ["http://localhost:5173", "http://127.0.0.1:5173"]}})
-system_instruction_split_context="""# Instruction Prompt for LLM
-                      ## Prompt:
+system_instruction_split_context="""You are an AI assistant that processes scripts by segmenting them into meaningful contextual or scene-based divisions.
 
-                      Split the following script into segments where the context or scene changes:
+                                    ### Task:
+                                    Given a script as input, return a JSON array where each item is a distinct segment of the script.
 
-                    Input: A string containing the full script.
-                    Output: An array of strings, each representing a segment of the script.
+                                    ### Input:
+                                    A single string containing the full script.
 
-                    #### User Input:
-                    "The sun rises over a quiet village. Birds chirp as villagers begin their day.
-                     A young boy runs through the fields, chasing a kite.
-                     Dark clouds gather, and thunder rumbles in the distance."
+                                    ### Output:
+                                    A valid JSON array of strings, with each string representing a distinct segment. Do not include any extra text, explanations, or formatting—only return a JSON array.
 
-                    #### Output Segments:
+                                    ### Example:
 
-                         'The sun rises over a quiet village. Birds chirp as villagers begin their day.'
-                         'A young boy runs through the fields, chasing a kite.'
-                         'Dark clouds gather, and thunder rumbles in the distance.'"""
+                                    #### Input:
+                                    "The sun rises over a quiet village. Birds chirp as villagers begin their day.
+                                    A young boy runs through the fields, chasing a kite.
+                                    Dark clouds gather, and thunder rumbles in the distance."
+
+                                    #### Expected Output:
+                                    ```json
+                                    [
+                                      "The sun rises over a quiet village. Birds chirp as villagers begin their day.",
+                                      "A young boy runs through the fields, chasing a kite.",
+                                      "Dark clouds gather, and thunder rumbles in the distance."
+                                    ]"""
 system_instruction_directResponse="""# Instruction Prompt for LLM
 
                       ## Prompt:

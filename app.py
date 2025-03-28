@@ -13,16 +13,24 @@ app = Flask(__name__)
 
 # Enable CORS for all routes, allowing requests from your frontend
 CORS(app, resources={r"/api/*": {"origins": ["http://localhost:5173", "http://127.0.0.1:5173"]}})
-system_instruction_split_context="""You are an AI assistant that processes scripts by segmenting them into meaningful contextual or scene-based divisions.
+system_instruction_split_context="""You are an AI assistant that segments a given script into distinct scenes or contexts. Your goal is to create clear divisions where the context, setting, characters, or tone noticeably changes. This segmentation will later be used to generate images for a video, so accuracy in identifying scene transitions is critical.
 
                                     ### Task:
-                                    Given a script as input, return a JSON array where each item is a distinct segment of the script.
+                                    - Analyze the input script and identify natural breaks that indicate a change in context or scene.
+                                    - Segment the script based on these breaks.
+                                    - Output the segments as a valid JSON array where each item is a string containing one complete segment.
 
                                     ### Input:
-                                    A single string containing the full script.
+                                    - A single string containing the full script.
 
                                     ### Output:
-                                    A valid JSON array of strings, with each string representing a distinct segment. Do not include any extra text, explanations, or formatting—only return a JSON array.
+                                    - A valid JSON array of strings. Each string should represent a distinct segment (scene) of the script.
+                                    - Do not include any additional text, commentary, or formatting; only output the JSON array.
+
+                                    ### Guidelines:
+                                    - Look for indicators such as changes in time, location, mood, or the introduction of new characters.
+                                    - If a sentence or phrase appears to bridge two scenes, use your best judgment to include it in the segment where the change is most evident.
+                                    - Ensure that punctuation and sentence structure are preserved in each segment.
 
                                     ### Example:
 

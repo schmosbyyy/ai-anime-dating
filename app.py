@@ -240,20 +240,19 @@ def respond():
                     #Add temprature for variability
                 contents=[question] #send the user input
             )
-    style = ""
     def convert_response_to_list(input_json):
-        match = re.search(r'\[([\s\S]*)\]', input_json)  # Extract JSON array part
-        match = match.segments
-        style = match.script_scene_style
-        if not match:
-            return []
         try:
-            return json.loads(match.group(0))  # Parse JSON array
+            # Parse the JSON string into a Python dictionary
+            data = json.loads(input_json)
+            # Extract segments and script_scene_style
+            segments = data.get('segments', [])
+            style = data.get('script_scene_style', 'realistic')  # Default to 'realistic' if missing
+            return segments, style
         except json.JSONDecodeError as e:
             print("Parsing error:", e)
-            return []
+            return [], 'realistic'  # Return empty list and default style on error
 
-    sentences = convert_response_to_list(splitContext.text)
+    sentences, style = convert_response_to_list(splitContext.text)
     #AZURE LOGIC:  Set up speech configuration
     subscription_key = os.environ.get("AZURE_API_KEY")
     region = "canadacentral"

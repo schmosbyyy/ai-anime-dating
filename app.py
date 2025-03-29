@@ -279,7 +279,13 @@ def respond():
             "type": "viseme",
             "value": evt.viseme_id
         })
-
+    def word_handler(evt):
+        offset_ms = evt.audio_offset / 10000  # Convert ticks to milliseconds
+        events.append({
+            "time": offset_ms,
+            "type": "word",
+            "word": evt.text  # Captures the word text from the event
+        })
     def bookmark_handler(evt):
         offset_ms = evt.audio_offset / 10000  # Convert from ticks (100-ns units) to milliseconds
         events.append({
@@ -291,6 +297,7 @@ def respond():
     # Attach event handlers
     synthesizer.viseme_received.connect(viseme_handler)
     synthesizer.bookmark_reached.connect(bookmark_handler)
+    synthesizer.word_boundary.connect(word_handler)
 
     # Synthesize speech from the input text
     textValue = aiResponse.text.strip()
@@ -318,7 +325,7 @@ def respond():
         word_timings = [
             {
                 "time": e["time"] / 1000,    # Convert ms to seconds
-                "viseme": e["value"]         # Azure viseme ID (integer)
+                "word": e["word"]         # Azure viseme ID (integer)
             } for e in word_events
         ]
         bookmark_timings = [

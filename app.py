@@ -297,7 +297,7 @@ def respond():
     # Attach event handlers
     synthesizer.viseme_received.connect(viseme_handler)
     synthesizer.bookmark_reached.connect(bookmark_handler)
-    synthesizer.word_boundary.connect(word_handler)
+    synthesizer.synthesis_word_boundary.connect(word_handler)
 
     # Synthesize speech from the input text
     textValue = aiResponse.text.strip()

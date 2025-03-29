@@ -315,6 +315,12 @@ def respond():
                 "viseme": e["value"]         # Azure viseme ID (integer)
             } for e in viseme_events
         ]
+        word_timings = [
+            {
+                "time": e["time"] / 1000,    # Convert ms to seconds
+                "viseme": e["value"]         # Azure viseme ID (integer)
+            } for e in word_events
+        ]
         bookmark_timings = [
             {
                 "time": event["time"] / 1000,  # Convert milliseconds to seconds
@@ -330,6 +336,7 @@ def respond():
             "audio_url": audio_base64,
             "ai_response": textValue,
             "phoneme_timings": phoneme_timings,
+            "word_timings": word_timings,
             "bookmark_timings": bookmark_timings,
             "splitContext": sentences,
             "style": style,

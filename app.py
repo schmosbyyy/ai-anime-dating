@@ -86,16 +86,16 @@ system_instruction_split_context="""You are an AI assistant tasked with two obje
                                     **Expected Output:**
                                     {
                                       "segments": [
-                                        {"text": "It was a cold November evening in 1997 when 34-year-old Linda Calloway finished her shift at a small diner in downtown Milwaukee. She was a waitress, working late to support her two kids."},
-                                        {"text": "At exactly 11:23 PM, security cameras caught her locking up the diner, wrapping her scarf tight against the chill, and walking toward her car parked a block away."},
-                                        {"text": "She never made it home."},
-                                        {"text": "The next morning, a jogger discovered her abandoned car on the side of a quiet residential street—unlocked, keys in the ignition, and her purse still in the front seat."},
-                                        {"text": "But Linda was gone."},
-                                        {"text": "The investigation moved quickly. Police canvassed the area and found a witness—a retired schoolteacher who lived on that street."},
-                                        {"text": "She recalled hearing a muffled scream around midnight but assumed it was just a late-night argument.", "style_modifier": "eerie with faint mist"},
-                                        {"text": "With no signs of struggle and no immediate suspects, the case went cold."}
+                                        "It was a cold November evening in 1997 when 34-year-old Linda Calloway finished her shift at a small diner in downtown Milwaukee. She was a waitress, working late to support her two kids.",
+                                        "At exactly 11:23 PM, security cameras caught her locking up the diner, wrapping her scarf tight against the chill, and walking toward her car parked a block away.",
+                                        "She never made it home.",
+                                        "The next morning, a jogger discovered her abandoned car on the side of a quiet residential street—unlocked, keys in the ignition, and her purse still in the front seat.",
+                                        "But Linda was gone.",
+                                        "The investigation moved quickly. Police canvassed the area and found a witness—a retired schoolteacher who lived on that street.",
+                                        "She recalled hearing a muffled scream around midnight but assumed it was just a late-night argument.",
+                                        "With no signs of struggle and no immediate suspects, the case went cold."
                                       ],
-                                      "script_scene_style": "hyper-realistic with muted tones and harsh lighting"
+                                      "script_scene_style": "realistic"
                                     }
 
                                     **Explanation:**
@@ -111,12 +111,12 @@ system_instruction_split_context="""You are an AI assistant tasked with two obje
                                     **Expected Output:**
                                     {
                                       "segments": [
-                                        {"text": "The old house creaked as the wind howled outside."},
-                                        {"text": "Inside, Sarah lit a candle and opened an ancient book."},
-                                        {"text": "Shadows danced on the walls as she read aloud."},
-                                        {"text": "Suddenly, the room grew cold, and a faint whisper echoed from the hallway.", "style_modifier": "surreal with glowing edges"}
+                                        "The old house creaked as the wind howled outside.",
+                                        "Inside, Sarah lit a candle and opened an ancient book.",
+                                        "Shadows danced on the walls as she read aloud.",
+                                        "Suddenly, the room grew cold, and a faint whisper echoed from the hallway."
                                       ],
-                                      "script_scene_style": "gothic with dark shadows and crimson accents"
+                                      "script_scene_style": "gothic"
                                     }
 
                                     **Explanation:**

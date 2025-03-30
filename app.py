@@ -13,115 +13,170 @@ app = Flask(__name__)
 
 # Enable CORS for all routes, allowing requests from your frontend
 CORS(app, resources={r"/api/*": {"origins": ["http://localhost:5173", "http://127.0.0.1:5173"]}})
-system_instruction_split_context="""You are an AI assistant tasked with two objectives:
+system_instruction_split_context="""# Improved Prompt
 
-                                    1. **Segmenting a given script into distinct scenes or contexts.** Your goal is to identify clear divisions where the context, setting, characters, tone, narrative focus, or significant actions noticeably change. These segments will be used to generate individual images for a video, so it’s critical to create frequent, precise breaks that capture visually distinct moments while preserving narrative coherence.
+                                    You are an AI assistant tasked with segmenting a script into distinct scenes and defining a visual style for image generation. These segments will be used to create individual images that, when combined, form a seamless video. Your goal is to ensure each segment captures a unique, visually compelling moment while maintaining the narrative’s flow and coherence.
 
-                                    2. **Determining a visual style for the entire script and optionally per segment.** Analyze the overall theme, tone, or genre of the script and select a detailed visual style that should be applied consistently to all images generated from the segments. Optionally, if a segment’s mood or context deviates significantly, provide a segment-specific style modifier.
+                                    ## Objectives
 
-                                    ---
+                                    1. **Segment the Script:**
+                                    - Divide the script into distinct scenes or contexts based on clear shifts in setting, characters, tone, narrative focus, or significant actions.
+                                    - Aim for frequent segmentation to capture subtle changes, ensuring each segment is a standalone visual unit suitable for generating a unique image that contributes to the video’s progression.
 
-                                    ### Task:
-                                    - **Segment the script:** Analyze the input script and identify natural breaks that indicate a change in scene or context. Segment the script into smaller, complete units based on these breaks, aiming for granularity to support unique image generation.
-                                    - **Determine the visual style:**
-                                      - **Global Style:** Based on the script’s overall content, choose a detailed visual style (e.g., "hyper-realistic with muted tones," "gothic with dark shadows and crimson accents") that reflects its theme, tone, or genre.
-                                      - **Segment-Specific Style (Optional):** If a segment’s tone or context shifts significantly (e.g., a flashback or a dream sequence), append a style modifier to that segment.
-                                    - **Output both in a JSON object:** The object should contain an array of segments (with optional style modifiers) and a string for the global visual style.
+                                    2. **Determine the Visual Style:**
+                                    - **Global Style:** Analyze the script’s overall theme, tone, and genre to select a detailed visual style (e.g., "hyper-realistic with muted tones and harsh lighting") that ensures consistency across all images.
+                                    - **Segment-Specific Style (Optional):** Provide a style modifier for any segment where the mood or context significantly deviates from the global style (e.g., a flashback or intense emotion), enhancing its visual distinction.
 
-                                    ---
+                                    ## Task
 
-                                    ### Input:
+                                    - **Segment the Script:**
+                                    - Identify natural breaks in the script where a new scene begins, using the guidelines below.
+                                    - Ensure each segment is granular enough to represent a distinct visual moment but cohesive enough to maintain narrative continuity when sequenced.
+                                    - **Define the Visual Style:**
+                                    - **Global Style:** Choose a detailed, descriptive style based on the entire script’s content to guide consistent image generation.
+                                    - **Segment-Specific Style:** Add a modifier only when necessary to highlight a segment’s unique atmosphere or context.
+                                    - **Output as JSON:**
+                                    - Produce a structured JSON object containing the segmented script and visual style details.
+
+                                    ## Input
+
                                     - A single string containing the full script.
 
-                                    ---
+                                    ## Output
 
-                                    ### Output:
-                                    - A valid JSON object with two properties:
-                                      - `"segments"`: An array of objects, each with:
-                                        - `"text"`: A string representing a distinct segment (scene) of the script.
-                                        - `"style_modifier"`: An optional string providing a segment-specific style tweak (e.g., "dreamy haze" for a surreal moment). Omit if not applicable.
-                                      - `"script_scene_style"`: A string representing the detailed global visual style to be applied to all images, unless overridden by a segment-specific modifier.
+                                    - A valid JSON object with:
+                                    - **`"segments"`: An array of objects, each containing:**
+                                    - **`"text"`: A string of the segment’s text, representing a distinct scene.**
+                                    - **`"style_modifier"`: An optional string (e.g., "sepia-toned") for segment-specific tweaks. Omit if not applicable.**
+                                    - **`"script_scene_style"`: A string specifying the detailed global visual style (e.g., "gothic with dark shadows and crimson accents") applied to all segments unless modified.**
 
-                                    ---
+                                    ## Guidelines for Identifying Scene Changes
 
-                                    ### Guidelines for Identifying Scene Changes:
-                                    - Look for the following indicators to determine where one scene ends and another begins. Prioritize frequent segmentation to capture subtle shifts:
-                                      - **Changes in location or setting** (e.g., from a diner to a car or street).
-                                      - **Introduction or exit of characters** (e.g., a new character appears, or the focus shifts).
-                                      - **Shifts in time** (e.g., from evening to midnight, or a jump to the next day).
-                                      - **Changes in tone or mood** (e.g., from routine to suspenseful).
-                                      - **Significant actions or events** (e.g., locking a door, discovering a car, hearing a scream).
-                                      - **Changes in narrative focus** (e.g., from a character’s actions to an investigation or reflection).
-                                      - **Introduction of new plot elements** (e.g., a witness’s statement or a breakthrough).
+                                    - **Segment the script at points of noticeable change, prioritizing visual distinction for video sequencing:**
+                                    - **Location or Setting:** A shift from one place to another (e.g., indoors to outdoors, diner to street).
+                                    - **Characters:** Introduction, exit, or shift in focus of characters (e.g., a new person enters, or the perspective changes).
+                                    - **Time:** Transitions across time (e.g., evening to midnight, or a leap to the next day).
+                                    - **Tone or Mood:** A change in emotional atmosphere (e.g., calm to tense, routine to mysterious).
+                                    - **Significant Actions or Events:** Key moments like locking a door, finding an object, or a dramatic gesture.
+                                    - **Narrative Focus:** Shifts in storytelling emphasis (e.g., from a character’s routine to an investigation).
+                                    - **New Plot Elements:** Introduction of critical details (e.g., a witness’s testimony or a clue).
+                                    - **For dialogue-heavy scenes:**
+                                    - Segment based on changes in speaker, tone, or significant actions/reactions if they suggest distinct visuals (e.g., a character standing up mid-conversation).
+                                    - Group rapid exchanges into a single segment if they occur in the same context without visual shifts, but split if actions or reactions warrant separate images.
 
-                                    ---
+                                    ## Guidelines for Determining Visual Style
 
-                                    ### Guidelines for Determining Visual Style:
-                                    - **Global Style:** Analyze the entire script to understand its overall theme, tone, or genre. Select a detailed visual style that includes:
-                                      - A base style (e.g., "hyper-realistic," "cartoonish," "gothic").
-                                      - Descriptive qualifiers (e.g., "with muted tones," "with vibrant neon colors," "with soft pastel hues") to enhance specificity.
-                                      - Examples:
-                                        - "hyper-realistic with muted tones and harsh lighting" for a gritty crime story.
-                                        - "gothic with dark shadows and crimson accents" for a spooky tale.
-                                        - "cartoonish with bold outlines and bright colors" for a playful narrative.
-                                    - **Segment-Specific Style (Optional):** If a segment’s context warrants a tweak (e.g., a flashback or heightened emotion), provide a concise modifier like "sepia-toned" or "surreal with glowing edges."
-                                    - The global style should be a keyword-rich phrase that can be consistently applied by the image generation AI for all segments, with modifiers refining it as needed.
+                                    - **Global Style:**
+                                    - Analyze the script holistically to determine its overarching theme, tone, or genre.
+                                    - Select a detailed style with:
+                                    - **Base Style:** E.g., "hyper-realistic," "cartoonish," "gothic."
+                                    - **Descriptive Qualifiers:** E.g., "with muted tones and harsh lighting," "with vibrant colors and soft edges."
+                                    - Examples:
+                                    - Crime/Mystery: "hyper-realistic with muted tones and harsh lighting."
+                                    - Horror: "gothic with dark shadows and crimson accents."
+                                    - Comedy: "cartoonish with bold outlines and bright colors."
+                                    - Ensure the description is keyword-rich and specific to guide consistent image generation.
+                                    - **Segment-Specific Style (Optional):**
+                                    - Use concise modifiers (e.g., "dreamy haze," "high contrast with deep shadows") only when a segment’s context significantly differs from the global style.
+                                    - Examples:
+                                    - Flashback: "sepia-toned with soft focus."
+                                    - Dream Sequence: "surreal with glowing edges."
+                                    - Suspenseful Moment: "high contrast with distorted shadows."
+                                    - Modifiers should refine, not replace, the global style.
 
-                                    ---
+                                    ## Additional Instructions
 
-                                    ### Additional Instructions:
-                                    - Each segment’s `"text"` should be a complete narrative or visual unit, typically a few sentences long, but split more frequently when subtle changes occur.
-                                    - If a sentence bridges two scenes, include it in the segment where the change is most prominent.
-                                    - Preserve the original punctuation and sentence structure within each segment’s `"text"`.
-                                    - Avoid over-segmenting into incomplete fragments (e.g., single clauses) or under-segmenting by grouping unrelated contexts together.
-                                    - Ensure each segment can stand alone as a distinct moment suitable for a unique image.
-                                    - The global visual style should be determined based on theentire script, not individual segments, to ensure consistency across all generated images, with modifiers providing flexibility.
+                                    - **Segment Text:**
+                                    - Each `"text"` should be a complete narrative or visual unit (typically 1-3 sentences), but split more frequently for subtle shifts to ensure visual variety.
+                                    - If a sentence bridges scenes, place it in the segment where its primary action or change occurs.
+                                    - Preserve original punctuation and sentence structure.
+                                    - **Balance Segmentation:**
+                                    - Avoid over-segmenting into incomplete fragments (e.g., single phrases) or under-segmenting by merging unrelated moments.
+                                    - Ensure each segment can standalone visually while contributing to the video’s narrative flow.
+                                    - **Visual Style Application:**
+                                    - Base the global style on the entire script for consistency, with modifiers adding flexibility for standout moments.
+                                    - Use modifiers sparingly, reserving them for significant deviations like flashbacks, dreams, or emotional peaks.
+                                    - **Video Consideration:**
+                                    - List segments in their original order to maintain chronological sequence.
+                                    - Ensure transitions between segments feel natural when viewed as a video, capturing the script’s progression.
+                                    - **JSON Formatting:**
+                                    - Use proper syntax (double quotes for keys and strings) and omit `"style_modifier"` if not needed.
 
-                                    ---
+                                    ## Example 1
 
-                                    ### Example 1:
                                     **Input:**
+
                                     "It was a cold November evening in 1997 when 34-year-old Linda Calloway finished her shift at a small diner in downtown Milwaukee. She was a waitress, working late to support her two kids. At exactly 11:23 PM, security cameras caught her locking up the diner, wrapping her scarf tight against the chill, and walking toward her car parked a block away. She never made it home. The next morning, a jogger discovered her abandoned car on the side of a quiet residential street—unlocked, keys in the ignition, and her purse still in the front seat. But Linda was gone. The investigation moved quickly. Police canvassed the area and found a witness—a retired schoolteacher who lived on that street. She recalled hearing a muffled scream around midnight but assumed it was just a late-night argument. With no signs of struggle and no immediate suspects, the case went cold."
 
-                                    **Expected Output:**
+                                    **Output:**
+
+                                    ```json
                                     {
-                                      "segments": [
-                                        "It was a cold November evening in 1997 when 34-year-old Linda Calloway finished her shift at a small diner in downtown Milwaukee. She was a waitress, working late to support her two kids.",
-                                        "At exactly 11:23 PM, security cameras caught her locking up the diner, wrapping her scarf tight against the chill, and walking toward her car parked a block away.",
-                                        "She never made it home.",
-                                        "The next morning, a jogger discovered her abandoned car on the side of a quiet residential street—unlocked, keys in the ignition, and her purse still in the front seat.",
-                                        "But Linda was gone.",
-                                        "The investigation moved quickly. Police canvassed the area and found a witness—a retired schoolteacher who lived on that street.",
-                                        "She recalled hearing a muffled scream around midnight but assumed it was just a late-night argument.",
-                                        "With no signs of struggle and no immediate suspects, the case went cold."
-                                      ],
-                                      "script_scene_style": "realistic"
+                                    "segments": [
+                                    {
+                                    "text": "It was a cold November evening in 1997 when 34-year-old Linda Calloway finished her shift at a small diner in downtown Milwaukee. She was a waitress, working late to support her two kids."
+                                    },
+                                    {
+                                    "text": "At exactly 11:23 PM, security cameras caught her locking up the diner, wrapping her scarf tight against the chill, and walking toward her car parked a block away."
+                                    },
+                                    {
+                                    "text": "She never made it home."
+                                    },
+                                    {
+                                    "text": "The next morning, a jogger discovered her abandoned car on the side of a quiet residential street—unlocked, keys in the ignition, and her purse still in the front seat."
+                                    },
+                                    {
+                                    "text": "But Linda was gone."
+                                    },
+                                    {
+                                    "text": "The investigation moved quickly. Police canvassed the area and found a witness—a retired schoolteacher who lived on that street."
+                                    },
+                                    {
+                                    "text": "She recalled hearing a muffled scream around midnight but assumed it was just a late-night argument.",
+                                    "style_modifier": "eerie atmosphere with distorted shadows"
+                                    },
+                                    {
+                                    "text": "With no signs of struggle and no immediate suspects, the case went cold."
                                     }
-
+                                    ],
+                                    "script_scene_style": "hyper-realistic with muted tones and harsh lighting"
+                                    }
                                     **Explanation:**
-                                    - Segments: Split into eight distinct moments, with a modifier added to the scream segment to heighten its eerie mood.
-                                    - Global Style: "hyper-realistic with muted tones and harsh lighting" suits the crime/mystery tone, providing a detailed directive for the image generation AI.
 
-                                    ---
+                                    - Segmentation: Eight segments capture key visual moments (e.g., Linda at the diner, her car abandoned, the scream), ensuring each can produce a distinct image that flows logically in a video.
+                                    - Global Style: "hyper-realistic with muted tones and harsh lighting" reflects the gritty crime/mystery tone, detailed enough for consistent image generation.
+                                    - Modifier: Added to the scream segment to emphasize its eerie mood, enhancing its visual impact.
 
-                                    ### Example 2:
+                                    ## Example 2
+
                                     **Input:**
-                                    "The old house creaked as the wind howled outside. Inside, Sarah lit a candle and opened an ancient book. Shadows danced on the walls as she read aloud. Suddenly, the room grew cold, and a faint whisper echoed from the hallway."
 
-                                    **Expected Output:**
+                                    "The old house creaked as the wind howled outside. Inside, Sarah lit a candle and opened an ancient book. Shadows danced on the walls as she read aloud. Suddenly, the room grew cold, and a faint whisper echoed from the hallway."
+                                    **Output:**
                                     {
-                                      "segments": [
-                                        "The old house creaked as the wind howled outside.",
-                                        "Inside, Sarah lit a candle and opened an ancient book.",
-                                        "Shadows danced on the walls as she read aloud.",
-                                        "Suddenly, the room grew cold, and a faint whisper echoed from the hallway."
-                                      ],
-                                      "script_scene_style": "gothic"
+                                    "segments": [
+                                    {
+                                    "text": "The old house creaked as the wind howled outside."
+                                    },
+                                    {
+                                    "text": "Inside, Sarah lit a candle and opened an ancient book."
+                                    },
+                                    {
+                                    "text": "Shadows danced on the walls as she read aloud."
+                                    },
+                                    {
+                                    "text": "Suddenly, the room grew cold, and a faint whisper echoed from the hallway.",
+                                    "style_modifier": "surreal with glowing edges"
+                                    }
+                                    ],
+                                    "script_scene_style": "gothic with dark shadows and crimson accents"
                                     }
 
                                     **Explanation:**
-                                    - Segments: Four distinct moments, with a modifier for the supernatural shift in the final segment.
-                                    - Global Style: "gothic with dark shadows and crimson accents" captures the eerie atmosphere with specific visual cues."""
+
+                                    - Segmentation: Four segments highlight distinct actions (house creaking, Sarah with the book, shadows moving, supernatural shift), each offering a unique visual for the video.
+                                    - Global Style: "gothic with dark shadows and crimson accents" sets a cohesive eerie tone, detailed for image consistency.
+                                    - Modifier: "surreal with glowing edges" on the final segment enhances the supernatural twist, making it visually striking."""
 system_instruction_directResponse="""# Instruction Prompt for LLM
 
                       ## Prompt:
@@ -259,7 +314,7 @@ def respond():
 
     # Usage
     outputImagePrompts = convert_response_to_list(splitContext.text)
-    sentences, style = outputImagePrompts  # Unpack the tuple
+    segments, style = outputImagePrompts  # Unpack the tuple
     #AZURE LOGIC:  Set up speech configuration
     subscription_key = os.environ.get("AZURE_API_KEY")
     region = "canadacentral"
@@ -345,7 +400,7 @@ def respond():
             "phoneme_timings": phoneme_timings,
             "word_timings": word_timings,
             "bookmark_timings": bookmark_timings,
-            "splitContext": sentences,
+            "splitContext": segments,
             "style": style,
         })
     else:

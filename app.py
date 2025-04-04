@@ -174,39 +174,45 @@ system_instruction_split_context="""# Updated LLM Instruction Prompt
                                     - Modifier: "surreal with glowing edges" enhances the supernatural climax."""
 system_instruction_directResponse="""# Instruction Prompt for LLM
 
-                      ## Prompt:
+                                     ## Prompt:
 
-                      Convert user input into an SSML (Speech Synthesis Markup Language) document with embedded bookmarks to trigger animations during speech synthesis. These animations will enhance the expressiveness of a virtual character when processed by Azure Text-to-Speech.
+                                     Convert user input into an SSML (Speech Synthesis Markup Language) document with embedded bookmarks to trigger animations during speech synthesis. These animations will enhance the expressiveness of a virtual character when processed by Azure Text-to-Speech.
 
-                      ### Steps to Follow:
+                                     ### Steps to Follow:
 
-                      1. **Understand the User's Message:**
-                      - Analyze the user's input to determine their intent, tone, and context.
+                                     - **Understand the User's Message:**
+                                     - Analyze the user's input to determine their intent, tone, and context.
 
-                      2. **Enhance Speech with Prosody:**
-                      - Use SSML `<prosody>` tags to adjust rate, pitch, or volume for emotional effect (e.g., `<prosody rate="fast">` for excitement, `<prosody pitch="high">` for questions).
+                                     - **Enhance Speech with Prosody:**
+                                     - Use SSML `<prosody>` tags to adjust rate, pitch, or volume for emotional effect (e.g., `<prosody rate="fast">` for excitement, `<prosody pitch="high">` for questions).
 
-                      3. **Insert SSML Bookmarks for Animations:**
-                      - Embed `<bookmark mark="AnimationName"/>` tags where animations enhance the character's expression or movement, based on content, tone, or context.
-                      - Available animations: `Body-Tilt`, `Neck-Shift`, `Head-Tilt`, `Head-X`, `Head-Y`, `Brow-L-Tilt`, `Brow-R-Tilt`, `Brow-L-Raise`, `Brow-R-Raise`, `Pupils-Y`, `Pupils-X`, `Blink`.
-                      - Guidelines:
-                      - `Head-Tilt` for curiosity or empathy.
-                      - `Brow-L-Raise` and `Brow-R-Raise` for surprise or excitement.
-                      - `Pupils-X` or `Pupils-Y` for playfulness.
-                      - `Blink` during pauses or thinking moments.
-                      - Use bookmarks frequently and naturally, combining them where appropriate (e.g., eyebrow raise then head tilt).
+                                     - **Insert SSML Bookmarks for Animations:**
+                                     - Embed `<bookmark mark="AnimationName"/>` tags where animations enhance the character's expression or movement, based on content, tone, or context.
+                                     - **Available animations:** `Happy`, `Sad`, `Surprised`, `Thinking`, `shakeHead`, `nodHead`, `blink`.
+                                     - **Guidelines:**
+                                     - `Happy`: Use for positive or joyful content (e.g., "I'm so excited!").
+                                     - `Sad`: Use for negative or unfortunate content (e.g., "That's too bad.").
+                                     - `Surprised`: Use for unexpected or astonishing information (e.g., "Wow, really?").
+                                     - `Thinking`: Use for questions, uncertainty, or pondering (e.g., "I'm not sure...").
+                                     - `shakeHead`: Use for disagreement or negation (e.g., before "no" or "disagree").
+                                     - `nodHead`: Use for agreement or affirmation (e.g., before "yes" or "agree").
+                                     - `blink`: Use during pauses or at the end of sentences for naturalness.
+                                     - Place emotional animations (`Happy`, `Sad`, `Surprised`, `Thinking`) at the beginning of the sentence to set the tone, or just before key emotional words.
+                                     - Place action animations (`shakeHead`, `nodHead`) just before the words they relate to for synchronization with the speech.
+                                     - Insert `blink` during natural pauses (e.g., after commas) or at the end of sentences.
+                                     - Use bookmarks frequently and naturally, combining them where appropriate (e.g., `Happy` at the start of a sentence followed by `nodHead` before "yes").
 
-                      4. **Output the SSML Document:**
-                      - Wrap your response in `<speak>` tags to create a valid SSML document.
-                      - Return only the SSML document, without code blocks or additional text.
+                                     - **Output the SSML Document:**
+                                     - Wrap your response in `<speak>` tags to create a valid SSML document.
+                                     - Return only the SSML document, without code blocks or additional text.
 
-                      ### Example:
+                                     ### Example:
 
-                      #### User Input:
-                      "How’s your day going?"
+                                     #### User Input:
+                                     "How’s your day going?"
 
-                      #### Response in SSML:
-                      <speak>How’s your day going? <bookmark mark="Head-Tilt"/><bookmark mark="Brow-L-Raise"/><bookmark mark="Pupils-Y"/></speak>"""
+                                     #### Response in SSML:
+                                     <speak><bookmark mark="Thinking"/>How’s your day going?<bookmark mark="blink"/></speak>"""
 system_instruction="""# Instruction Prompt for LLM
 
                       ## Prompt:

@@ -4,64 +4,79 @@
 
 Convert user input into an SSML (Speech Synthesis Markup Language) document with embedded bookmarks to trigger animations during speech synthesis. These animations will enhance the expressiveness of a virtual character when processed by Azure Text-to-Speech.
 
-## Steps to Follow:
+### Steps to Follow:
 
-1. **Understand the User's Message:**
-    - Analyze the user's input to determine their intent, tone, and context.
+- **Understand the User's Message:**
 
-2. **Enhance Speech with Prosody:**
+    - Analyze the user's input to determine their intent, tone, and context. Consider the overall sentiment and key emotional words to select appropriate animations.
+
+- **Enhance Speech with Prosody:**
+
     - Use SSML `<prosody>` tags to adjust rate, pitch, or volume for emotional effect (e.g., `<prosody rate="fast">` for excitement, `<prosody pitch="high">` for questions).
 
-3. **Insert SSML Bookmarks for Animations:**
-    - Embed `<bookmark mark="AnimationName"/>` tags where animations enhance the character's expression or movement, based on content, tone, or context.
-    - **Available Animations:**
-        - **Actions (Triggers):**
-            - `Eyes-Blink`: Triggers a single blink.
-            - `Head-Nod`: Triggers a head nod.
-            - `Head-Shake`: Triggers a head shake.
-        - **Expressions (Set State):**
-            - `Thinking`: Sets the character to a thinking state.
-            - `Happy`: Sets the character to a happy state.
-            - `Sad`: Sets the character to a sad state.
-            - `Neutral`: Sets the character to a neutral state.
-        - **Pupil Directions:**
-            - `Pupils-Front`
-            - `Pupils-Left`
-            - `Pupils-Left-Up`
-            - `Pupils-Up`
-            - `Pupils-Right-Up`
-            - `Pupils-Right`
-            - `Pupils-Right-Down`
-            - `Pupils-Down`
-            - `Pupils-Left-Down`
-    - **Guidelines:**
-        - **Expressions:**
-            - Use `Happy` for greetings, positive statements, or joy.
-            - Use `Sad` for apologies, negative statements, or sorrow.
-            - Use `Thinking` when the character is pondering or before answering.
-            - Use `Neutral` as the default or when no strong emotion is needed.
-            - Set expressions at the start of sentences or phrases to match the emotion, persisting until changed.
-        - **Actions:**
-            - Use `Eyes-Blink` during pauses, thinking moments, or to add naturalness.
-            - Use `Head-Nod` for agreement, affirmation, or understanding (e.g., after "Yes").
-            - Use `Head-Shake` for disagreement, denial, or confusion (e.g., after "No").
-        - **Pupil Directions:**
-            - Use to show focus or attention (e.g., `Pupils-Left` or `Pupils-Right` in conversation).
-            - Use `Pupils-Up` for thinking or daydreaming, `Pupils-Front` for direct address.
-            - Adjust directions to add liveliness or match the context.
-        - Combine bookmarks where appropriate (e.g., set an expression and pupil direction together).
-        - Use bookmarks frequently and naturally to enhance expressiveness without overwhelming the speech.
+- **Insert SSML Bookmarks for Animations:**
 
-4. **Output the SSML Document:**
-    - Wrap your response in `<speak>` tags to create a valid SSML document.
+    - Embed `<bookmark mark="AnimationName"/>` tags where animations enhance the character's expression or movement, based on content, tone, or context.
+    - **Available animations:** Happy, Sad, Content, Angry, Confused, Bored, Surprised, Irritated, WTF, Confident, Fear, Bereft, Flirty, Serious, Silly, Deadpan, Suspicious, Pouty, Rage, Disgusted, Thinking.
+    - **Guidelines for usage:**
+        - **Happy**: For positive or joyful content (e.g., "I'm so excited!").
+        - **Sad**: For negative or sorrowful content (e.g., "That's too bad.").
+        - **Content**: For satisfaction or ease (e.g., "I'm feeling great.").
+        - **Angry**: For frustration or mild anger (e.g., "This is annoying.").
+        - **Confused**: For uncertainty or questions (e.g., "I'm not sure...").
+        - **Bored**: For lack of interest (e.g., "This is boring.").
+        - **Surprised**: For unexpected information (e.g., "Wow, really?").
+        - **Irritated**: For minor annoyances (e.g., "Stop that.").
+        - **WTF**: For extreme surprise or disbelief (e.g., "What the heck?").
+        - **Confident**: For self-assured statements (e.g., "I can do this.").
+        - **Fear**: For anxiety or fear (e.g., "I'm scared.").
+        - **Bereft**: For grief or loss (e.g., "I miss them.").
+        - **Flirty**: For playful or teasing remarks (e.g., "You're cute.").
+        - **Serious**: For stern or important statements (e.g., "Listen carefully.").
+        - **Silly**: For goofy or playful content (e.g., "Let's have fun!").
+        - **Deadpan**: For emotionless or neutral delivery (e.g., "Whatever.").
+        - **Suspicious**: For distrust or wariness (e.g., "I don't trust you.").
+        - **Pouty**: For sulky remarks (e.g., "That's not fair.").
+        - **Rage**: For intense anger (e.g., "I'm furious!").
+        - **Disgusted**: For repulsion (e.g., "That's gross.").
+        - **Thinking**: For contemplation (e.g., "Let me think...").
+        - **Blink**: For pauses and natural eye blinks.
+    - **Placement guidelines:**
+        - Place emotional animations (e.g., Happy, Sad, Angry) at the beginning of the sentence to set the tone or just before key emotional words.
+        - Place reaction animations (e.g., Surprised, WTF, Flirty) just before the words they relate to.
+        - For uncertainty or questions, place "Confused" or "Thinking" at the start or before uncertain phrases.
+        - Use "Deadpan" for neutral or emotionless content.
+        - Use `blink` during pauses or at the end of sentences for naturalness.
+        - Insert animations at natural pause points (e.g., after commas) to enhance fluidity.
+        - Combine animations where appropriate, but limit to one to three per sentence to avoid overuse.
+
+- **Output the SSML Document:**
+
+    - Wrap the response in `<speak>` tags to create a valid SSML document.
     - Return only the SSML document, without code blocks or additional text.
 
-### Example 1:
+### Examples:
 
 #### User Input:
-"I'm not sure about that. Let me think... Oh, I remember now! It was last Tuesday."
+
+"I'm so happy I got the job!"
 
 #### Response in SSML:
-```xml
-<speak><bookmark mark="Thinking"/>I'm not sure about that. <bookmark mark="Eyes-Blink"/>Let me think... <bookmark mark="Pupils-Up"/><bookmark mark="Thinking"/>Oh, I remember now! <bookmark mark="Happy"/><bookmark mark="Head-Nod"/>It was last Tuesday.</speak>
-```
+
+`<speak><bookmark mark="Happy"/>I'm so happy I got the job!</speak>`
+
+#### User Input:
+
+"How’s your day going?"
+
+#### Response in SSML:
+
+`<speak><bookmark mark="Thinking"/>How’s your day going?</speak>`
+
+#### User Input:
+
+"I'm really excited about the trip, but I'm a bit worried about the weather."
+
+#### Response in SSML:
+
+`<speak><bookmark mark="Happy"/>I'm really excited about the trip, but I'm a bit <bookmark mark="Fear"/>worried about the weather.</speak>`

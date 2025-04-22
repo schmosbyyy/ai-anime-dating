@@ -57,10 +57,11 @@ system_instruction_split_context="""# Updated LLM Instruction Prompt
                                     ### 2. Generating Visual Descriptions
 
                                     Create a "visual_representation_of_text" for each segment that:
-                                    - Is concise yet evocative, focusing on essential visual elements.
+                                    - Is concise yet focusing on essential visual elements.
                                     - Uses descriptive language to paint a clear mental image.
                                     - Directly reflects the segment’s text and contributes to the narrative flow.
                                     - Includes sensory details like lighting, colors, textures, and spatial relationships.
+                                    - It should be a Family friendly description.
 
                                     *Aim for descriptions detailed enough to guide image generation but not overly prescriptive.*
 

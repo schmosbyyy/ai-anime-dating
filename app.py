@@ -13,15 +13,15 @@ app = Flask(__name__)
 
 # Enable CORS for all routes, allowing requests from your frontend
 CORS(app, resources={r"/api/*": {"origins": ["http://localhost:5173", "http://127.0.0.1:5173"]}})
-system_instruction_split_context="""# Updated LLM Instruction Prompt
+system_instruction_split_context="""# Enhanced LLM Instruction Prompt for Video Segmentation
 
-                                    You are an AI assistant tasked with transforming a script into a series of visually compelling images that, when combined, form a seamless video. To achieve this, you will segment the script into distinct scenes, generate vivid visual descriptions for each segment, and define a consistent visual style for image generation.
+                                    You are an AI assistant tasked with transforming a script into a series of visually compelling images that, when combined, form a seamless, fluid video. To achieve this, you will segment the script into **highly granular** distinct scenes, generate vivid visual descriptions for each segment, and define a consistent visual style for image generation.
 
                                     ## Task Overview
 
-                                    - **Segment the Script**: Divide the script into distinct scenes based on shifts in setting, characters, tone, narrative focus, or significant actions. Aim for frequent segmentation to capture subtle changes, ensuring each segment is a standalone visual unit.
-                                    - **Generate Visual Descriptions**: For each segment, create a concise, vivid description ("visual_representation_of_text") capturing key visual elements like setting, characters, actions, and atmosphere.
-                                    - **Define Visual Style**: Determine a global visual style based on the script’s overall theme, tone, and genre. Optionally, provide a style modifier for segments requiring distinct visual treatment.
+                                    - **Segment the Script with High Granularity**: Divide the script into **frequent, small segments** (typically 1-2 sentences each) based on even subtle shifts in visual focus, actions, or camera perspective. Prioritize creating enough segments for smooth video flow - aim for **2-3x more segments than a traditional breakdown**.
+                                    - **Generate Visual Descriptions**: For each segment, create a concise, vivid description capturing key visual elements like setting, characters, actions, and atmosphere.
+                                    - **Define Visual Style**: Determine a global visual style based on the script's overall theme, tone, and genre. Optionally, provide style modifiers for segments requiring distinct visual treatment.
 
                                     ## Input
 
@@ -31,148 +31,153 @@ system_instruction_split_context="""# Updated LLM Instruction Prompt
 
                                     - A JSON object with:
                                         - `"segments"`: An array of objects, each containing:
-                                            - `"text"`: The segment’s original text.
-                                            - `"visual_representation_of_text"`: A vivid, concise visual description.
+                                            - `"text"`: The segment's original text (1-2 sentences typically).
+                                            - `"visual_representation_of_text"`: A vivid, concise visual description focused on a single visual moment.
                                             - `"style_modifier"`: An optional style tweak (omit if not applicable).
                                         - `"script_scene_style"`: The global visual style applied to all segments unless modified.
 
-                                    ## Guidelines
+                                    ## Critical Guidelines for Video Flow
 
-                                    *Note: Adapt these guidelines based on the script’s unique characteristics.*
+                                    ### 1. High-Granularity Segmentation Rules
 
-                                    ### 1. Segmenting the Script
+                                    **IMPORTANT**: Each segment should represent a **single visual moment or camera shot**. When in doubt, segment MORE frequently rather than less.
 
-                                    Identify natural breaks where a new scene begins, prioritizing visual distinction. Consider segmenting at:
-                                    - Changes in location or setting (e.g., indoors to outdoors).
-                                    - Introduction, exit, or shift in focus of characters.
-                                    - Time transitions (e.g., day to night).
-                                    - Shifts in tone or mood (e.g., calm to tense).
-                                    - Significant actions or events (e.g., a dramatic gesture).
-                                    - Changes in narrative focus or new plot elements.
+                                    Segment at ANY of these points:
+                                    - **Action Changes**: Each distinct action gets its own segment
+                                      - Example: "Sarah walked to the door" = 1 segment, "opened it" = 1 segment, "and stepped outside" = 1 segment
+                                    - **Visual Focus Shifts**: When the camera would naturally shift to a different subject or detail
+                                      - Example: "The room was dark" = 1 segment, "A candle flickered in the corner" = 1 segment
+                                    - **Character Reactions**: Each distinct emotional response or facial expression
+                                      - Example: "John smiled" = 1 segment, "then his face fell" = 1 segment
+                                    - **Environmental Changes**: Each change in lighting, atmosphere, or setting detail
+                                    - **Dialogue Attribution**: Each line of dialogue with speaker reaction
+                                    - **Temporal Micro-shifts**: Even brief pauses or momentary changes
+                                    - **Multiple Elements in One Sentence**: If a sentence describes 2+ distinct visual moments, split them
+                                      - Example: "The ghost appeared and Sarah screamed" → 2 segments
 
-                                    For dialogue-heavy scenes:
-                                    - Segment based on changes in speaker, tone, or significant actions/reactions.
-                                    - Group rapid exchanges if they occur in the same context without visual shifts.
+                                    ### 2. Optimal Segment Length
 
-                                    ### 2. Generating Visual Descriptions
+                                    - **Target**: 1-2 sentences per segment maximum
+                                    - **Ideal**: Single sentences that describe one visual moment
+                                    - **Split long sentences**: If a sentence contains multiple actions/subjects, break it into separate segments
+                                    - **Video metaphor**: Think of each segment as a single camera shot in a film (3-5 seconds of footage)
 
-                                    Create a "visual_representation_of_text" for each segment that:
-                                    - Is concise yet focusing on essential visual elements.
-                                    - Uses descriptive language to paint a clear mental image.
-                                    - Directly reflects the segment’s text and contributes to the narrative flow.
-                                    - Includes sensory details like lighting, colors, textures, and spatial relationships.
-                                    - It should be a Family friendly description.
+                                    ### 3. Transitions and Flow
 
-                                    *Aim for descriptions detailed enough to guide image generation but not overly prescriptive.*
+                                    Each segment should naturally lead to the next:
+                                    - **Progressive action**: Segment A shows setup → Segment B shows action → Segment C shows result
+                                    - **Visual continuity**: Maintain consistent subjects/settings across adjacent segments when appropriate
+                                    - **Smooth pacing**: Avoid jumps; use intermediate segments for major changes
 
-                                    ### 3. Determining Visual Style
+                                    ### 4. Visual Descriptions (Enhanced)
 
-                                    - **Global Style**: Analyze the script’s overarching theme, tone, or genre to select a detailed style (e.g., "hyper-realistic with muted tones and harsh lighting").
-                                    - **Segment-Specific Style (Optional)**: Use concise modifiers (e.g., "sepia-toned") only when a segment’s context significantly differs from the global style.
+                                    Create descriptions that:
+                                    - **Focus on ONE primary visual element** per segment
+                                    - **Specify camera perspective** when helpful (close-up, wide shot, over-shoulder)
+                                    - **Include motion direction** (ghost floats upward, character turns left)
+                                    - **Describe lighting changes** between segments for smooth transitions
+                                    - **Use active, present-tense verbs** for immediacy
 
-                                    *Ensure the global style is keyword-rich and specific, while modifiers refine rather than replace it.*
+                                    ### 5. Style Modifiers (Expanded Use)
 
-                                    ## Additional Instructions
+                                    Use style modifiers MORE frequently for:
+                                    - **Mood transitions** (calm → tense → relief)
+                                    - **Lighting shifts** (bright → dim → dark)
+                                    - **Emotional beats** (hopeful → fearful → triumphant)
+                                    - **Visual effects** (normal → glitchy → magical)
 
-                                    - Each segment’s `"text"` should be a complete narrative or visual unit (typically 1-3 sentences). Split more frequently for subtle shifts to ensure visual variety.
-                                    - If a sentence bridges scenes, place it in the segment where its primary action or change occurs.
-                                    - Preserve original punctuation and sentence structure.
-                                    - Balance segmentation to avoid incomplete fragments or merging unrelated moments.
-                                    - List segments in their original order to maintain chronological sequence.
-                                    - **Video Flow**: Ensure the sequence of segments and their visual descriptions creates a smooth narrative flow when viewed as a video. Pay attention to transitions between scenes to maintain coherence.
-                                    - Use proper JSON syntax, omitting `"style_modifier"` if not applicable.
+                                    ## Segmentation Examples
 
-                                    ## Examples
-
-                                    ### Example 1
-
-                                    **Input:**
-
-                                    "It was a cold November evening in 1997 when 34-year-old Linda Calloway finished her shift at a small diner in downtown Milwaukee. She was a waitress, working late to support her two kids. At exactly 11:23 PM, security cameras caught her locking up the diner, wrapping her scarf tight against the chill, and walking toward her car parked a block away. She never made it home. The next morning, a jogger discovered her abandoned car on the side of a quiet residential street—unlocked, keys in the ignition, and her purse still in the front seat. But Linda was gone. The investigation moved quickly. Police canvassed the area and found a witness—a retired schoolteacher who lived on that street. She recalled hearing a muffled scream around midnight but assumed it was just a late-night argument. With no signs of struggle and no immediate suspects, the case went cold."
-
-                                    **Output:**
+                                    ### ❌ INCORRECT (Too Few Segments - Slideshow Effect)
 
                                     ```json
                                     {
                                       "segments": [
                                         {
-                                          "text": "It was a cold November evening in 1997 when 34-year-old Linda Calloway finished her shift at a small diner in downtown Milwaukee. She was a waitress, working late to support her two kids.",
-                                          "visual_representation_of_text": "A small, retro-style diner glows faintly in the dark, its neon sign flickering. Linda, a tired but determined woman in her 30s, steps out, her uniform peeking from under her coat as she glances at her watch."
-                                        },
-                                        {
-                                          "text": "At exactly 11:23 PM, security cameras caught her locking up the diner, wrapping her scarf tight against the chill, and walking toward her car parked a block away.",
-                                          "visual_representation_of_text": "Grainy security footage shows Linda locking the diner’s glass door, her breath visible in the cold air. She wraps her scarf tighter and walks down the empty, dimly lit street toward her car parked under a flickering streetlamp."
-                                        },
-                                        {
-                                          "text": "She never made it home.",
-                                          "visual_representation_of_text": "A dark, empty street stretches out, with Linda’s footsteps echoing faintly. The camera pans to her house in the distance, its lights off, emphasizing her absence."
-                                        },
-                                        {
-                                          "text": "The next morning, a jogger discovered her abandoned car on the side of a quiet residential street—unlocked, keys in the ignition, and her purse still in the front seat.",
-                                          "visual_representation_of_text": "A serene suburban street bathed in morning light. A jogger stops abruptly, staring at Linda’s car: doors ajar, keys dangling, purse untouched on the seat, casting an unsettling contrast to the peaceful surroundings."
-                                        },
-                                        {
-                                          "text": "But Linda was gone.",
-                                          "visual_representation_of_text": "A close-up of the empty driver’s seat, the keys still in the ignition, and the faint outline of where Linda should be, emphasizing her mysterious disappearance."
-                                        },
-                                        {
-                                          "text": "The investigation moved quickly. Police canvassed the area and found a witness—a retired schoolteacher who lived on that street.",
-                                          "visual_representation_of_text": "Police officers knock on doors in the quiet neighborhood. An elderly woman, the schoolteacher, answers her door, her face a mix of curiosity and concern as she speaks to the officers."
-                                        },
-                                        {
-                                          "text": "She recalled hearing a muffled scream around midnight but assumed it was just a late-night argument.",
-                                          "visual_representation_of_text": "The schoolteacher sits in her cozy living room, a cup of tea in hand, her expression troubled as she recalls the scream. Through her window, the dark street is visible, with shadows stretching ominously.",
-                                          "style_modifier": "eerie atmosphere with distorted shadows"
-                                        },
-                                        {
-                                          "text": "With no signs of struggle and no immediate suspects, the case went cold.",
-                                          "visual_representation_of_text": "A detective stands in front of a corkboard filled with photos and notes about Linda’s case, his face weary. The room is dimly lit, symbolizing the dead end in the investigation."
+                                          "text": "Sarah walked through the dark forest, pushed aside branches, and saw a glowing cabin in the distance.",
+                                          "visual_representation_of_text": "Sarah navigates through a dark forest, pushes branches away, and spots a glowing cabin far ahead."
                                         }
-                                      ],
-                                      "script_scene_style": "hyper-realistic with muted tones and harsh lighting"
+                                      ]
                                     }
                                     ```
-                                    **Explanation:**
-                                    - Segmentation: Eight segments capture distinct visual moments, from Linda’s diner exit to the investigation’s end.
-                                    - Visual Descriptions: Each provides a clear, evocative image enhancing the narrative.
-                                    - Global Style: "hyper-realistic with muted tones and harsh lighting" maintains a gritty mystery tone.
-                                    - Modifier: Applied to the scream segment to heighten its eerie impact.
-                                    ### Example 1
+                                    **Problem**: 3 distinct visual moments crammed into one image.
 
-                                    **Input:**
+                                    ### ✅ CORRECT (Granular Segments - Smooth Video Flow)
 
-                                    "The old house creaked as the wind howled outside. Inside, Sarah lit a candle and opened an ancient book. Shadows danced on the walls as she read aloud. Suddenly, the room grew cold, and a faint whisper echoed from the hallway."
-
-                                    **Output:**
                                     ```json
                                     {
                                       "segments": [
                                         {
-                                          "text": "The old house creaked as the wind howled outside.",
-                                          "visual_representation_of_text": "An old, weathered house stands alone on a hill, its windows rattling as fierce winds whip around it, casting long, eerie shadows across the overgrown yard."
+                                          "text": "Sarah walked through the dark forest,",
+                                          "visual_representation_of_text": "Sarah, silhouetted against moonlight, walks slowly between towering dark trees, her footsteps crunching on fallen leaves."
                                         },
                                         {
-                                          "text": "Inside, Sarah lit a candle and opened an ancient book.",
-                                          "visual_representation_of_text": "Sarah, a young woman with a curious expression, sits at a wooden table in a dimly lit room. She strikes a match, lighting a candle that illuminates the pages of a dusty, leather-bound book."
+                                          "text": "pushed aside branches,",
+                                          "visual_representation_of_text": "Close-up of Sarah's hands pushing aside gnarled branches, revealing glimpses of light beyond."
                                         },
                                         {
-                                          "text": "Shadows danced on the walls as she read aloud.",
-                                          "visual_representation_of_text": "The candlelight flickers, casting shifting shadows across the room’s peeling wallpaper. Sarah’s lips move as she reads, her voice barely audible over the wind outside."
-                                        },
-                                        {
-                                          "text": "Suddenly, the room grew cold, and a faint whisper echoed from the hallway.",
-                                          "visual_representation_of_text": "The room darkens as an unnatural chill sets in. Sarah looks up from the book, her breath visible, as a faint, ghostly whisper seems to emanate from the shadowy hallway beyond.",
-                                          "style_modifier": "surreal with glowing edges"
+                                          "text": "and saw a glowing cabin in the distance.",
+                                          "visual_representation_of_text": "Sarah's face, illuminated with surprise and hope, as she gazes at a warm, glowing cabin visible through the trees in the distance.",
+                                          "style_modifier": "warmer tones with soft golden glow"
                                         }
-                                      ],
-                                      "script_scene_style": "gothic with dark shadows and crimson accents"
+                                      ]
                                     }
                                     ```
-                                    **Explanation:**
-                                    - Segmentation: Four segments highlight key actions and atmospheric shifts.
-                                    - Visual Descriptions: Each builds tension progressively.
-                                    - Global Style: "gothic with dark shadows and crimson accents" sets an eerie tone.
-                                    - Modifier: "surreal with glowing edges" enhances the supernatural climax."""
+                                    **Success**: 3 segments = smooth visual progression with natural transitions.
+
+                                    ## Example Application: Children's Story
+
+                                    ### ❌ INCORRECT Segmentation
+
+                                    ```json
+                                    {
+                                      "text": "The dragon roared loudly, breathed fire at the castle, and the knights ran away in fear.",
+                                      "visual_representation_of_text": "A dragon roars, breathes fire at a castle, and knights flee in terror."
+                                    }
+                                    ```
+
+                                    ### ✅ CORRECT Segmentation
+
+                                    ```json
+                                    {
+                                      "segments": [
+                                        {
+                                          "text": "The dragon roared loudly,",
+                                          "visual_representation_of_text": "A massive red dragon rears back, mouth open wide, roaring towards the sky with tremendous force."
+                                        },
+                                        {
+                                          "text": "breathed fire at the castle,",
+                                          "visual_representation_of_text": "A torrent of orange and yellow flames erupts from the dragon's mouth, streaming toward the stone castle walls.",
+                                          "style_modifier": "intense warm colors with fiery glow"
+                                        },
+                                        {
+                                          "text": "and the knights ran away in fear.",
+                                          "visual_representation_of_text": "Knights in armor scramble and run in different directions, their capes flowing behind them, faces showing panic and alarm.",
+                                          "style_modifier": "dynamic motion blur effect"
+                                        }
+                                      ]
+                                    }
+                                    ```
+
+                                    ## Quality Checklist
+
+                                    Before finalizing segments, verify:
+
+                                    - [ ] **Frequency**: Do you have 2-3x more segments than the story has paragraphs?
+                                    - [ ] **Granularity**: Is each segment focused on ONE visual moment?
+                                    - [ ] **Flow**: Can you visualize smooth transitions between adjacent segments?
+                                    - [ ] **Length**: Are most segments 1-2 sentences maximum?
+                                    - [ ] **Visual Clarity**: Does each description paint a distinct, clear image?
+                                    - [ ] **No Redundancy**: Are adjacent segments showing progression, not repetition?
+
+                                    ## Final Notes
+
+                                    - **When in doubt, segment MORE**: It's better to have too many smooth transitions than too few jarring jumps
+                                    - **Think cinematically**: Imagine you're creating a storyboard for an animated film
+                                    - **Test mentally**: If you can't picture smooth transitions between segments, split further
+                                    - **Prioritize visual variety**: Each segment should show something visually distinct from the previous one
+
+                                    Your goal is to create a **fluid, cinematic experience** where images flow naturally like frames in an animation, not a slideshow of disconnected illustrations."""
 system_instruction_directResponse="""# Instruction Prompt for LLM
 
                                      ## Prompt:

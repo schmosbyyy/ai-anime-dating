@@ -1,0 +1,325 @@
+# AI Anime Dating Backend - Cursor Rules
+
+## 🎯 Project Overview
+Flask-based AI integration service combining conversational AI, speech synthesis, and visual storytelling for interactive anime character experiences.
+
+## 📋 Code Style & Conventions
+
+### Naming Conventions
+- **Variables**: `snake_case` (e.g., `aiResponse`, `splitContext`, `audio_base64`)
+- **Functions**: `snake_case` with descriptive names
+- **Constants**: `UPPER_CASE` for system instructions and configuration
+- **Files**: `snake_case.py` for Python files
+
+### Import Organization
+```python
+# Standard library imports first
+import os
+import json
+import logging
+import base64
+
+# Third-party imports (alphabetical)
+import flask
+from flask_cors import CORS
+import openai
+from google import genai
+import azure.cognitiveservices.speech as speechsdk
+```
+
+### Code Structure
+- Single-file Flask applications for simplicity
+- Clear section separation with comments
+- Embedded system instructions as module-level constants
+- Main application logic in route handlers
+
+## 🔧 Implementation Patterns
+
+### 1. Error Handling Pattern
+```python
+try:
+    logger.info("Starting operation: context_description")
+    # Operation code here
+    logger.info("Successfully completed operation")
+except Exception as e:
+    logger.error(f"Failed to complete operation: {str(e)}")
+    return jsonify({
+        "error": "Descriptive Error Category",
+        "details": f"Detailed error description: {str(e)}",
+        "api": "Service Name"
+    }), 500
+```
+
+**Rules:**
+- Always wrap external API calls in try-catch blocks
+- Include specific error categories for frontend handling
+- Log both success and failure with context
+- Return structured error responses with `error`, `details`, and `api` fields
+
+### 2. Logging Pattern
+```python
+logger.info("Starting process: description with context")
+# Process steps...
+logger.info("Completed step successfully")
+# More steps...
+logger.error(f"Process failed: {str(e)}")
+```
+
+**Rules:**
+- Log at every major step with descriptive context
+- Use `logger.info()` for normal operations
+- Use `logger.error()` for failures with full error details
+- Include relevant variables/values in log messages
+
+### 3. API Integration Pattern
+```python
+# Environment variable validation
+api_key = os.environ.get("API_KEY_NAME")
+if not api_key:
+    raise ValueError("API_KEY_NAME environment variable not set")
+
+# Client initialization with error handling
+try:
+    client = ServiceClient(api_key=api_key)
+    logger.info("Successfully initialized service client")
+except Exception as e:
+    logger.error(f"Failed to initialize service client: {str(e)}")
+    return error_response(...)
+```
+
+**Rules:**
+- Always validate environment variables before use
+- Initialize clients within try-catch blocks
+- Log successful initializations
+- Use descriptive error messages for configuration failures
+
+### 4. Response Processing Pattern
+```python
+def process_response(raw_response):
+    try:
+        logger.info("Parsing response data")
+        # Parse and validate response
+        processed_data = transform_data(raw_response)
+        logger.info(f"Successfully processed {len(processed_data)} items")
+        return processed_data
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON parsing error: {str(e)}")
+        return default_fallback
+    except Exception as e:
+        logger.error(f"Unexpected processing error: {str(e)}")
+        return default_fallback
+```
+
+**Rules:**
+- Robust parsing with fallback defaults
+- Log parsing success with item counts
+- Handle specific parsing exceptions (JSONDecodeError, etc.)
+- Always provide sensible defaults for error cases
+
+### 5. Async Operation Pattern
+```python
+try:
+    logger.info("Starting async operation")
+    result = async_operation().get()  # Synchronous wait for async result
+    logger.info("Async operation completed successfully")
+    return result
+except Exception as e:
+    logger.error(f"Async operation failed: {str(e)}")
+    return error_response(...)
+```
+
+**Rules:**
+- Use `.get()` for synchronous completion of async operations
+- Wrap in comprehensive error handling
+- Log operation start and completion
+
+### 6. Data Transformation Pattern
+```python
+# Convert complex objects to standardized format
+def transform_to_standard_format(raw_data):
+    return [
+        {
+            "time": item.time_offset / 1000,  # Convert to seconds
+            "value": item.value,
+            "type": "standardized_type"
+        }
+        for item in raw_data
+    ]
+```
+
+**Rules:**
+- Convert all timing values to seconds (divide by 1000)
+- Use consistent field naming across all data structures
+- Include type indicators for polymorphic data
+
+## 🔒 Security & Configuration
+
+### Environment Variables
+Required environment variables:
+- `GEMINI_API_KEY`: Google Gemini API authentication
+- `AZURE_API_KEY`: Azure Speech Services authentication
+- `PORT`: Server port (defaults to 5000)
+
+**Rules:**
+- Never hardcode API keys or sensitive data
+- Always validate environment variables before use
+- Use descriptive variable names for API keys
+- Document all required environment variables
+
+### CORS Configuration
+```python
+CORS(app, resources={
+    r"/api/*": {
+        "origins": [
+            "http://localhost:5173",     # Development
+            "http://127.0.0.1:5173",    # Development alternative
+            "https://ai-anime-dating.onrender.com"  # Production
+        ]
+    }
+})
+```
+
+**Rules:**
+- Restrict CORS to specific frontend domains
+- Include both localhost and production URLs
+- Use HTTPS for production deployments
+
+## 📊 Data Structures
+
+### Request Format
+```json
+{
+  "message": "string",           // Required
+  "personality": "string",       // Optional, default: "cheerful"
+  "styledegree": "string",       // Optional, default: "1"
+  "getAiResponse": boolean,      // Optional, default: true
+  "getScriptContext": boolean    // Optional, default: true
+}
+```
+
+### Response Format
+```json
+{
+  "audio_url": "base64_string",
+  "ai_response": "ssml_string",
+  "phoneme_timings": [{"time": float, "viseme": int}],
+  "word_timings": [{"time": float, "word": string}],
+  "bookmark_timings": [{"time": float, "mark": string}],
+  "splitContext": [{"text": string, "visual_representation_of_text": string, "style_modifier": string}],
+  "style": "string"
+}
+```
+
+**Rules:**
+- Maintain consistent response structure across all endpoints
+- Use snake_case for all JSON field names
+- Convert all timestamps to seconds (float)
+- Base64 encode binary data (audio)
+
+## 🎭 AI Integration Patterns
+
+### Gemini API Usage
+```python
+client.models.generate_content(
+    model="gemini-2.0-flash",
+    config=types.GenerateContentConfig(
+        system_instruction=system_prompt,
+        # Add temperature for variability if needed
+    ),
+    contents=[user_input]
+)
+```
+
+**Rules:**
+- Use consistent model version across all calls
+- Always include system instructions for consistent behavior
+- Consider adding temperature parameters for response variety
+- Handle both text and structured (JSON) responses
+
+### Azure Speech Synthesis
+```python
+speech_config = speechsdk.SpeechConfig(
+    subscription=azure_key,
+    region="canadacentral"
+)
+speech_config.speech_synthesis_voice_name = "en-US-AriaNeural"
+
+synthesizer = speechsdk.SpeechSynthesizer(
+    speech_config=speech_config,
+    audio_config=None  # Return audio data, don't save to file
+)
+```
+
+**Rules:**
+- Use consistent voice and region settings
+- Configure synthesizer with `audio_config=None` for in-memory processing
+- Attach event handlers before synthesis
+- Process results synchronously with `.get()`
+
+## 🧪 Testing & Validation
+
+### API Testing Pattern
+```bash
+# Test basic functionality
+curl -X POST http://localhost:5000/api/respond \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Hello!"}'
+
+# Test error handling
+curl -X POST http://localhost:5000/api/respond \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+**Rules:**
+- Test both success and error scenarios
+- Validate response structure matches expected format
+- Test with missing required parameters
+- Verify CORS headers in responses
+
+## 🚀 Deployment & Production
+
+### Gunicorn Configuration
+```bash
+gunicorn --bind 0.0.0.0:$PORT app:app
+```
+
+### Docker Pattern
+```dockerfile
+FROM python:3.9-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY . .
+EXPOSE 5000
+CMD ["python", "app.py"]
+```
+
+**Rules:**
+- Use environment variable for port binding
+- Include only necessary files in Docker image
+- Use slim Python base images for smaller size
+- Expose port for container orchestration
+
+## 📝 Documentation Requirements
+
+### Code Comments
+- Document complex business logic
+- Explain integration-specific requirements
+- Note fallback behaviors and error handling
+- Reference external API documentation
+
+### Commit Messages
+- Use descriptive commit messages
+- Reference issue numbers when applicable
+- Categorize changes: `feat:`, `fix:`, `docs:`, `refactor:`
+
+## 🔄 Development Workflow
+
+1. **Environment Setup**: Copy `.env.example` to `.env` and fill API keys
+2. **Local Testing**: Run `python app.py` and test endpoints
+3. **Code Changes**: Follow established patterns and error handling
+4. **Testing**: Validate both success and error scenarios
+5. **Documentation**: Update README for API changes
+
+Remember: This codebase prioritizes reliability and observability. Every external API call should be wrapped in comprehensive error handling with detailed logging for production debugging.

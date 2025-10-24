@@ -328,233 +328,233 @@ def respond():
         getScriptContext = data.get("getScriptContext", True)
         logger.info(f"Processing request with personality: {personality}, getAiResponse: {getAiResponse}, getScriptContext: {getScriptContext}")
 
-    client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
-    aiResponse = ""
-    splitContext = ""
-    question = "User Input:\n"
-    question += message
+        client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+        aiResponse = ""
+        splitContext = ""
+        question = "User Input:\n"
+        question += message
 
-    # Handle script context generation with error handling
-    if(getScriptContext):
-        try:
-            logger.info("Generating script context with Gemini API")
-            splitContext = client.models.generate_content(
-                            model="gemini-2.0-flash",
-                            config=types.GenerateContentConfig(
-                                system_instruction=system_instruction_split_context), #using the Split context instruction here
-                                #Add temprature for variability
-                            contents=[question] #send the user input
-                )
-            logger.info("Successfully generated script context")
-        except Exception as e:
-            logger.error(f"Failed to generate script context with Gemini API: {str(e)}")
-            return jsonify({
-                "error": "Script Context Generation Failed",
-                "details": f"Gemini API call for script context failed: {str(e)}",
-                "api": "Google Gemini (Script Context)"
-            }), 500
-    question += "\n Please generate the SSML-enhanced text based on this input."
+        # Handle script context generation with error handling
+        if(getScriptContext):
+            try:
+                logger.info("Generating script context with Gemini API")
+                splitContext = client.models.generate_content(
+                                model="gemini-2.0-flash",
+                                config=types.GenerateContentConfig(
+                                    system_instruction=system_instruction_split_context), #using the Split context instruction here
+                                    #Add temprature for variability
+                                contents=[question] #send the user input
+                    )
+                logger.info("Successfully generated script context")
+            except Exception as e:
+                logger.error(f"Failed to generate script context with Gemini API: {str(e)}")
+                return jsonify({
+                    "error": "Script Context Generation Failed",
+                    "details": f"Gemini API call for script context failed: {str(e)}",
+                    "api": "Google Gemini (Script Context)"
+                }), 500
+        question += "\n Please generate the SSML-enhanced text based on this input."
 
-    # Handle AI response generation with error handling
-    if(getAiResponse):
-        try:
-            logger.info("Generating AI response with Gemini API (full response)")
-            aiResponse = client.models.generate_content(
-                    model="gemini-2.0-flash",
-                    config=types.GenerateContentConfig(
-                        system_instruction=system_instruction), #using the SSML instructions prompt here
-                        #Add temprature for variability
-                    contents=[question] #send the user input
-                )
-            logger.info("Successfully generated AI response")
-        except Exception as e:
-            logger.error(f"Failed to generate AI response with Gemini API: {str(e)}")
-            return jsonify({
-                "error": "AI Response Generation Failed",
-                "details": f"Gemini API call for AI response failed: {str(e)}",
-                "api": "Google Gemini (AI Response)"
-            }), 500
-    else:
-        try:
-            logger.info("Generating direct AI response with Gemini API (SSML only)")
-            aiResponse = client.models.generate_content(
-                    model="gemini-2.0-flash",
-                    config=types.GenerateContentConfig(
-                        system_instruction=system_instruction_directResponse), #using the SSML instructions prompt here
-                        #Add temprature for variability
-                    contents=[question] #send the user input
-                )
-            logger.info("Successfully generated direct AI response")
-        except Exception as e:
-            logger.error(f"Failed to generate direct AI response with Gemini API: {str(e)}")
-            return jsonify({
-                "error": "Direct AI Response Generation Failed",
-                "details": f"Gemini API call for direct response failed: {str(e)}",
-                "api": "Google Gemini (Direct Response)"
-            }), 500
-    def convert_response_to_list(input_json):
-        try:
-            logger.info("Parsing script context JSON response")
-            # Parse the entire JSON string into a Python dictionary
-            cleaned_input = input_json.strip()
-            if cleaned_input.startswith('```json') and cleaned_input.endswith('```'):
-                cleaned_input = cleaned_input[7:-3].strip()  # Remove ```json and ```
-            elif cleaned_input.startswith('```') and cleaned_input.endswith('```'):
-                cleaned_input = cleaned_input[3:-3].strip()  # Remove plain ```
-            data = json.loads(cleaned_input)
-            # Extract segments and script_scene_style
-            segments = data.get('segments', [])  # Default to empty list if missing
-            style = data.get('script_scene_style', 'realistic')  # Default to 'realistic' if missing
-            logger.info(f"Successfully parsed {len(segments)} segments with style: {style}")
-            return segments, style  # Return both as a tuple
-        except json.JSONDecodeError as e:
-            logger.error(f"JSON parsing error for script context: {str(e)}")
-            logger.error(f"Raw input: {input_json[:500]}...")  # Log first 500 chars for debugging
-            return [], 'realistic'  # Return defaults on error
-        except Exception as e:
-            logger.error(f"Unexpected error parsing script context: {str(e)}")
-            return [], 'realistic'  # Return defaults on error
-
-    # Usage
-    outputImagePrompts = convert_response_to_list(splitContext.text)
-    segments, style = outputImagePrompts  # Unpack the tuple
-    #AZURE LOGIC:  Set up speech configuration
-    try:
-        logger.info("Setting up Azure Speech Synthesis configuration")
-        subscription_key = os.environ.get("AZURE_API_KEY")
-        if not subscription_key:
-            raise ValueError("AZURE_API_KEY environment variable not set")
-
-        region = "canadacentral"
-        speech_config = speechsdk.SpeechConfig(subscription=subscription_key, region=region)
-        speech_config.speech_synthesis_voice_name = "en-US-AriaNeural"
-
-        # Create speech synthesizer
-        synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=None)
-        logger.info("Successfully configured Azure Speech Synthesis")
-    except Exception as e:
-        logger.error(f"Failed to configure Azure Speech Synthesis: {str(e)}")
-        return jsonify({
-            "error": "Azure Speech Synthesis Configuration Failed",
-            "details": f"Failed to set up Azure speech configuration: {str(e)}",
-            "api": "Azure Speech Synthesis (Configuration)"
-        }), 500
-
-    # Initialize list to collect viseme and word timing events
-    events = []
-
-    def viseme_handler(evt):
-        offset_ms = evt.audio_offset / 10000  # Convert ticks to milliseconds
-        events.append({
-            "time": offset_ms,
-            "type": "viseme",
-            "value": evt.viseme_id
-        })
-    def word_handler(evt):
-        offset_ms = evt.audio_offset / 10000  # Convert ticks to milliseconds
-        events.append({
-            "time": offset_ms,
-            "type": "word",
-            "word": evt.text  # Captures the word text from the event
-        })
-    def bookmark_handler(evt):
-        offset_ms = evt.audio_offset / 10000  # Convert from ticks (100-ns units) to milliseconds
-        events.append({
-            "time": offset_ms,
-            "type": "bookmark",
-            "mark": evt.text  # The 'mark' attribute from the <bookmark> tag
-        })
-
-    # Attach event handlers
-    synthesizer.viseme_received.connect(viseme_handler)
-    synthesizer.bookmark_reached.connect(bookmark_handler)
-    synthesizer.synthesis_word_boundary.connect(word_handler)
-
-    # Synthesize speech from the input text
-    try:
-        logger.info("Starting Azure Speech Synthesis")
-        textValue = aiResponse.text.strip()
-        if textValue.startswith('```xml\n'):
-            textValue = textValue.split('\n', 1)[1].rsplit('\n', 1)[0]
-        # Ensure proper SSML header
-        if not textValue.startswith('<speak version='):
-            #https://learn.microsoft.com/en-us/azure/ai-services/speech-service/language-support?tabs=tts#voice-styles-and-roles
-            textValue = '<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="https://www.w3.org/2001/mstts" xml:lang="en-US"><voice name="en-US-AriaNeural"><mstts:express-as style="' + personality + '" styledegree="' + degree + '">' + textValue[7:-8] + '</mstts:express-as></voice></speak>'
-
-        logger.info("Sending SSML to Azure Speech Synthesis API")
-        result = synthesizer.speak_ssml_async(textValue).get() #speak_ssml_async or speak_text_async
-        logger.info("Speech synthesis completed")
-    except Exception as e:
-        logger.error(f"Failed during Azure Speech Synthesis: {str(e)}")
-        return jsonify({
-            "error": "Azure Speech Synthesis Failed",
-            "details": f"Speech synthesis API call failed: {str(e)}",
-            "api": "Azure Speech Synthesis (Synthesis)"
-        }), 500
-    # Check synthesis result and retrieve audio and timings
-    try:
-        logger.info("Processing Azure Speech Synthesis results")
-        if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-            logger.info("Speech synthesis completed successfully, processing results")
-            # Separate viseme and word events
-            viseme_events = [e for e in events if e["type"] == "viseme"]
-            word_events = [e for e in events if e["type"] == "word"]
-            bookmark_events = [e for e in events if e["type"] == "bookmark"]
-
-            # Format phoneme_timings (viseme timings)
-            phoneme_timings = [
-                {
-                    "time": e["time"] / 1000,    # Convert ms to seconds
-                    "viseme": e["value"]         # Azure viseme ID (integer)
-                } for e in viseme_events
-            ]
-            word_timings = [
-                {
-                    "time": e["time"] / 1000,    # Convert ms to seconds
-                    "word": e["word"]         # Azure viseme ID (integer)
-                } for e in word_events
-            ]
-            bookmark_timings = [
-                {
-                    "time": event["time"] / 1000,  # Convert milliseconds to seconds
-                    "mark": event["mark"]          # The bookmark name (e.g., "Head-Tilt")
-                }
-                for event in bookmark_events
-            ]
-
-            audio_data = result.audio_data  # Binary audio data
-            audio_base64 = base64.b64encode(audio_data).decode('utf-8')# Convert audio data to base64 string
-
-            logger.info("Successfully processed all synthesis results")
-            return jsonify({
-                "audio_url": audio_base64,
-                "ai_response": textValue,
-                "phoneme_timings": phoneme_timings,
-                "word_timings": word_timings,
-                "bookmark_timings": bookmark_timings,
-                "splitContext": segments,
-                "style": style,
-            })
+        # Handle AI response generation with error handling
+        if(getAiResponse):
+            try:
+                logger.info("Generating AI response with Gemini API (full response)")
+                aiResponse = client.models.generate_content(
+                        model="gemini-2.0-flash",
+                        config=types.GenerateContentConfig(
+                            system_instruction=system_instruction), #using the SSML instructions prompt here
+                            #Add temprature for variability
+                        contents=[question] #send the user input
+                    )
+                logger.info("Successfully generated AI response")
+            except Exception as e:
+                logger.error(f"Failed to generate AI response with Gemini API: {str(e)}")
+                return jsonify({
+                    "error": "AI Response Generation Failed",
+                    "details": f"Gemini API call for AI response failed: {str(e)}",
+                    "api": "Google Gemini (AI Response)"
+                }), 500
         else:
-            # Return error if synthesis fails
-            logger.error(f"Azure Speech Synthesis failed with reason: {result.reason}")
-            error_message = f"Synthesis failed with reason: {result.reason}"
-            if result.reason == speechsdk.ResultReason.Canceled:
-                cancellation_details = speechsdk.SpeechSynthesisCancellationDetails(result)
-                error_message += f", ErrorCode: {cancellation_details.error_code}, Details: {cancellation_details.error_details}"
-                logger.error(f"Synthesis cancellation details: {cancellation_details.error_details}")
+            try:
+                logger.info("Generating direct AI response with Gemini API (SSML only)")
+                aiResponse = client.models.generate_content(
+                        model="gemini-2.0-flash",
+                        config=types.GenerateContentConfig(
+                            system_instruction=system_instruction_directResponse), #using the SSML instructions prompt here
+                            #Add temprature for variability
+                        contents=[question] #send the user input
+                    )
+                logger.info("Successfully generated direct AI response")
+            except Exception as e:
+                logger.error(f"Failed to generate direct AI response with Gemini API: {str(e)}")
+                return jsonify({
+                    "error": "Direct AI Response Generation Failed",
+                    "details": f"Gemini API call for direct response failed: {str(e)}",
+                    "api": "Google Gemini (Direct Response)"
+                }), 500
+        def convert_response_to_list(input_json):
+            try:
+                logger.info("Parsing script context JSON response")
+                # Parse the entire JSON string into a Python dictionary
+                cleaned_input = input_json.strip()
+                if cleaned_input.startswith('```json') and cleaned_input.endswith('```'):
+                    cleaned_input = cleaned_input[7:-3].strip()  # Remove ```json and ```
+                elif cleaned_input.startswith('```') and cleaned_input.endswith('```'):
+                    cleaned_input = cleaned_input[3:-3].strip()  # Remove plain ```
+                data = json.loads(cleaned_input)
+                # Extract segments and script_scene_style
+                segments = data.get('segments', [])  # Default to empty list if missing
+                style = data.get('script_scene_style', 'realistic')  # Default to 'realistic' if missing
+                logger.info(f"Successfully parsed {len(segments)} segments with style: {style}")
+                return segments, style  # Return both as a tuple
+            except json.JSONDecodeError as e:
+                logger.error(f"JSON parsing error for script context: {str(e)}")
+                logger.error(f"Raw input: {input_json[:500]}...")  # Log first 500 chars for debugging
+                return [], 'realistic'  # Return defaults on error
+            except Exception as e:
+                logger.error(f"Unexpected error parsing script context: {str(e)}")
+                return [], 'realistic'  # Return defaults on error
+
+        # Usage
+        outputImagePrompts = convert_response_to_list(splitContext.text)
+        segments, style = outputImagePrompts  # Unpack the tuple
+        #AZURE LOGIC:  Set up speech configuration
+        try:
+            logger.info("Setting up Azure Speech Synthesis configuration")
+            subscription_key = os.environ.get("AZURE_API_KEY")
+            if not subscription_key:
+                raise ValueError("AZURE_API_KEY environment variable not set")
+
+            region = "canadacentral"
+            speech_config = speechsdk.SpeechConfig(subscription=subscription_key, region=region)
+            speech_config.speech_synthesis_voice_name = "en-US-AriaNeural"
+
+            # Create speech synthesizer
+            synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=None)
+            logger.info("Successfully configured Azure Speech Synthesis")
+        except Exception as e:
+            logger.error(f"Failed to configure Azure Speech Synthesis: {str(e)}")
+            return jsonify({
+                "error": "Azure Speech Synthesis Configuration Failed",
+                "details": f"Failed to set up Azure speech configuration: {str(e)}",
+                "api": "Azure Speech Synthesis (Configuration)"
+            }), 500
+
+        # Initialize list to collect viseme and word timing events
+        events = []
+
+        def viseme_handler(evt):
+            offset_ms = evt.audio_offset / 10000  # Convert ticks to milliseconds
+            events.append({
+                "time": offset_ms,
+                "type": "viseme",
+                "value": evt.viseme_id
+            })
+        def word_handler(evt):
+            offset_ms = evt.audio_offset / 10000  # Convert ticks to milliseconds
+            events.append({
+                "time": offset_ms,
+                "type": "word",
+                "word": evt.text  # Captures the word text from the event
+            })
+        def bookmark_handler(evt):
+            offset_ms = evt.audio_offset / 10000  # Convert from ticks (100-ns units) to milliseconds
+            events.append({
+                "time": offset_ms,
+                "type": "bookmark",
+                "mark": evt.text  # The 'mark' attribute from the <bookmark> tag
+            })
+
+        # Attach event handlers
+        synthesizer.viseme_received.connect(viseme_handler)
+        synthesizer.bookmark_reached.connect(bookmark_handler)
+        synthesizer.synthesis_word_boundary.connect(word_handler)
+
+        # Synthesize speech from the input text
+        try:
+            logger.info("Starting Azure Speech Synthesis")
+            textValue = aiResponse.text.strip()
+            if textValue.startswith('```xml\n'):
+                textValue = textValue.split('\n', 1)[1].rsplit('\n', 1)[0]
+            # Ensure proper SSML header
+            if not textValue.startswith('<speak version='):
+                #https://learn.microsoft.com/en-us/azure/ai-services/speech-service/language-support?tabs=tts#voice-styles-and-roles
+                textValue = '<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="https://www.w3.org/2001/mstts" xml:lang="en-US"><voice name="en-US-AriaNeural"><mstts:express-as style="' + personality + '" styledegree="' + degree + '">' + textValue[7:-8] + '</mstts:express-as></voice></speak>'
+
+            logger.info("Sending SSML to Azure Speech Synthesis API")
+            result = synthesizer.speak_ssml_async(textValue).get() #speak_ssml_async or speak_text_async
+            logger.info("Speech synthesis completed")
+        except Exception as e:
+            logger.error(f"Failed during Azure Speech Synthesis: {str(e)}")
             return jsonify({
                 "error": "Azure Speech Synthesis Failed",
-                "details": error_message,
+                "details": f"Speech synthesis API call failed: {str(e)}",
+                "api": "Azure Speech Synthesis (Synthesis)"
+            }), 500
+        # Check synthesis result and retrieve audio and timings
+        try:
+            logger.info("Processing Azure Speech Synthesis results")
+            if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
+                logger.info("Speech synthesis completed successfully, processing results")
+                # Separate viseme and word events
+                viseme_events = [e for e in events if e["type"] == "viseme"]
+                word_events = [e for e in events if e["type"] == "word"]
+                bookmark_events = [e for e in events if e["type"] == "bookmark"]
+
+                # Format phoneme_timings (viseme timings)
+                phoneme_timings = [
+                    {
+                        "time": e["time"] / 1000,    # Convert ms to seconds
+                        "viseme": e["value"]         # Azure viseme ID (integer)
+                    } for e in viseme_events
+                ]
+                word_timings = [
+                    {
+                        "time": e["time"] / 1000,    # Convert ms to seconds
+                        "word": e["word"]         # Azure viseme ID (integer)
+                    } for e in word_events
+                ]
+                bookmark_timings = [
+                    {
+                        "time": event["time"] / 1000,  # Convert milliseconds to seconds
+                        "mark": event["mark"]          # The bookmark name (e.g., "Head-Tilt")
+                    }
+                    for event in bookmark_events
+                ]
+
+                audio_data = result.audio_data  # Binary audio data
+                audio_base64 = base64.b64encode(audio_data).decode('utf-8')# Convert audio data to base64 string
+
+                logger.info("Successfully processed all synthesis results")
+                return jsonify({
+                    "audio_url": audio_base64,
+                    "ai_response": textValue,
+                    "phoneme_timings": phoneme_timings,
+                    "word_timings": word_timings,
+                    "bookmark_timings": bookmark_timings,
+                    "splitContext": segments,
+                    "style": style,
+                })
+            else:
+                # Return error if synthesis fails
+                logger.error(f"Azure Speech Synthesis failed with reason: {result.reason}")
+                error_message = f"Synthesis failed with reason: {result.reason}"
+                if result.reason == speechsdk.ResultReason.Canceled:
+                    cancellation_details = speechsdk.SpeechSynthesisCancellationDetails(result)
+                    error_message += f", ErrorCode: {cancellation_details.error_code}, Details: {cancellation_details.error_details}"
+                    logger.error(f"Synthesis cancellation details: {cancellation_details.error_details}")
+                return jsonify({
+                    "error": "Azure Speech Synthesis Failed",
+                    "details": error_message,
+                    "api": "Azure Speech Synthesis (Result Processing)"
+                }), 500
+        except Exception as e:
+            logger.error(f"Failed to process Azure Speech Synthesis results: {str(e)}")
+            return jsonify({
+                "error": "Azure Speech Synthesis Result Processing Failed",
+                "details": f"Failed to process synthesis results: {str(e)}",
                 "api": "Azure Speech Synthesis (Result Processing)"
             }), 500
-    except Exception as e:
-        logger.error(f"Failed to process Azure Speech Synthesis results: {str(e)}")
-        return jsonify({
-            "error": "Azure Speech Synthesis Result Processing Failed",
-            "details": f"Failed to process synthesis results: {str(e)}",
-            "api": "Azure Speech Synthesis (Result Processing)"
-        }), 500
 
     except Exception as e:
         logger.error(f"Unexpected error in /api/respond endpoint: {str(e)}")

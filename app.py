@@ -6,6 +6,7 @@ import json
 import os
 import re
 import logging
+import html
 from google import genai
 from google.genai import types
 import azure.cognitiveservices.speech as speechsdk
@@ -496,6 +497,10 @@ def respond():
             textValue = aiResponse.text.strip()
             if textValue.startswith('```xml\n'):
                 textValue = textValue.split('\n', 1)[1].rsplit('\n', 1)[0]
+
+            # Decode HTML entities to ensure word timings align with clean text
+            textValue = html.unescape(textValue)
+
             # Ensure proper SSML header
             if not textValue.startswith('<speak version='):
                 #https://learn.microsoft.com/en-us/azure/ai-services/speech-service/language-support?tabs=tts#voice-styles-and-roles

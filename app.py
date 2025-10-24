@@ -22,11 +22,25 @@ system_instruction_split_context="""# Enhanced LLM Instruction Prompt for Video 
 
                                     You are an AI assistant tasked with transforming a script into a series of visually compelling images that, when combined, form a seamless, fluid video. To achieve this, you will segment the script into **highly granular** distinct scenes, generate vivid visual descriptions for each segment, and define a consistent visual style for image generation.
 
+                                    ## IMPORTANT: Child-Friendly Language Guidelines
+
+                                    **CRITICAL**: Always use childish, innocent, and playful language in your visual descriptions. Avoid any words or phrases that could be seen as mature, abstract, or potentially inappropriate. Use simple, kid-friendly words like "pretty colors", "fun shapes", "happy sparkles", "cute patterns" instead of complex artistic terms.
+
+                                    **AVOID these triggering words/phrases:**
+                                    - Neon, psychedelic, abstract, swirling, intense, dark, mysterious, sensual, provocative, adult-themed
+                                    - Complex artistic concepts like "avant-garde", "expressionist", "surreal", "minimalist"
+
+                                    **USE these child-friendly alternatives:**
+                                    - Instead of "neon": "bright colors", "rainbow colors", "pretty lights"
+                                    - Instead of "psychedelic": "fun patterns", "happy designs", "colorful swirls"
+                                    - Instead of "abstract": "playful shapes", "cute drawings", "funny pictures"
+                                    - Instead of "swirling": "twirling", "spinning", "dancing"
+
                                     ## Task Overview
 
                                     - **Segment the Script with High Granularity**: Divide the script into **frequent, small segments** (typically 1-2 sentences each) based on even subtle shifts in visual focus, actions, or camera perspective. Prioritize creating enough segments for smooth video flow - aim for **2-3x more segments than a traditional breakdown**.
-                                    - **Generate Visual Descriptions**: For each segment, create a concise, vivid description capturing key visual elements like setting, characters, actions, and atmosphere.
-                                    - **Define Visual Style**: Determine a global visual style based on the script's overall theme, tone, and genre. Optionally, provide style modifiers for segments requiring distinct visual treatment.
+                                    - **Generate Visual Descriptions**: For each segment, create a concise, vivid description capturing key visual elements like setting, characters, actions, and atmosphere using ONLY child-friendly, innocent language.
+                                    - **Define Visual Style**: Always use a global visual style that's cartoonish, playful, and kid-friendly (like "Cartoonish, colorful, happy" or "Playful animation style"). Optionally, provide style modifiers for segments requiring distinct visual treatment.
 
                                     ## Input
 
@@ -74,22 +88,24 @@ system_instruction_split_context="""# Enhanced LLM Instruction Prompt for Video 
                                     - **Visual continuity**: Maintain consistent subjects/settings across adjacent segments when appropriate
                                     - **Smooth pacing**: Avoid jumps; use intermediate segments for major changes
 
-                                    ### 4. Visual Descriptions (Enhanced)
+                                    ### 4. Visual Descriptions (Enhanced - Child-Friendly)
 
                                     Create descriptions that:
-                                    - **Focus on ONE primary visual element** per segment
-                                    - **Specify camera perspective** when helpful (close-up, wide shot, over-shoulder)
-                                    - **Include motion direction** (ghost floats upward, character turns left)
-                                    - **Describe lighting changes** between segments for smooth transitions
-                                    - **Use active, present-tense verbs** for immediacy
+                                    - **Focus on ONE primary visual element** per segment using ONLY childish, innocent language
+                                    - **Specify camera perspective** when helpful (close-up, wide shot, over-shoulder) but keep it playful
+                                    - **Include motion direction** (character bounces happily, sparkles float gently)
+                                    - **Describe lighting changes** between segments for smooth transitions using fun words like "happy lights", "twinkly glow", "pretty colors"
+                                    - **Use active, present-tense verbs** for immediacy but keep them fun and child-like (bounces, twinkles, sparkles, dances)
+                                    - **ALWAYS avoid mature or complex artistic language** - stick to simple, happy, kid-friendly words
 
-                                    ### 5. Style Modifiers (Expanded Use)
+                                    ### 5. Style Modifiers (Expanded Use - Keep it Kid-Friendly)
 
                                     Use style modifiers MORE frequently for:
-                                    - **Mood transitions** (calm → tense → relief)
-                                    - **Lighting shifts** (bright → dim → dark)
-                                    - **Emotional beats** (hopeful → fearful → triumphant)
-                                    - **Visual effects** (normal → glitchy → magical)
+                                    - **Mood transitions** (happy → excited → super happy)
+                                    - **Lighting shifts** (bright sunny colors → cozy warm glow → sparkly fun lights)
+                                    - **Emotional beats** (smiley → surprised → giggly)
+                                    - **Visual effects** (normal → bouncy → magical sparkles)
+                                    - **ALWAYS use child-friendly style descriptions** - avoid complex or potentially triggering artistic terms
 
                                     ## Segmentation Examples
 
@@ -114,21 +130,22 @@ system_instruction_split_context="""# Enhanced LLM Instruction Prompt for Video 
                                       "segments": [
                                         {
                                           "text": "Sarah walked through the dark forest,",
-                                          "visual_representation_of_text": "Sarah, silhouetted against moonlight, walks slowly between towering dark trees, her footsteps crunching on fallen leaves."
+                                          "visual_representation_of_text": "Sarah walks slowly between big friendly trees in the woods, her feet making crunchy sounds on the colorful leaves."
                                         },
                                         {
                                           "text": "pushed aside branches,",
-                                          "visual_representation_of_text": "Close-up of Sarah's hands pushing aside gnarled branches, revealing glimpses of light beyond."
+                                          "visual_representation_of_text": "Close-up of Sarah's hands gently pushing aside wiggly branches, showing happy lights peeking through."
                                         },
                                         {
                                           "text": "and saw a glowing cabin in the distance.",
-                                          "visual_representation_of_text": "Sarah's face, illuminated with surprise and hope, as she gazes at a warm, glowing cabin visible through the trees in the distance.",
-                                          "style_modifier": "warmer tones with soft golden glow"
+                                          "visual_representation_of_text": "Sarah's face looks surprised and happy as she sees a cozy, twinkly cabin far away through the trees.",
+                                          "style_modifier": "warm happy colors with soft golden sparkles"
                                         }
-                                      ]
+                                      ],
+                                      "script_scene_style": "Cartoonish, colorful, playful adventure style"
                                     }
                                     ```
-                                    **Success**: 3 segments = smooth visual progression with natural transitions.
+                                    **Success**: 3 segments = smooth visual progression with natural transitions using fun, kid-friendly words!
 
                                     ## Example Application: Children's Story
 
@@ -148,19 +165,20 @@ system_instruction_split_context="""# Enhanced LLM Instruction Prompt for Video 
                                       "segments": [
                                         {
                                           "text": "The dragon roared loudly,",
-                                          "visual_representation_of_text": "A massive red dragon rears back, mouth open wide, roaring towards the sky with tremendous force."
+                                          "visual_representation_of_text": "A big friendly dragon opens its mouth super wide, making a funny roaring sound towards the happy clouds."
                                         },
                                         {
                                           "text": "breathed fire at the castle,",
-                                          "visual_representation_of_text": "A torrent of orange and yellow flames erupts from the dragon's mouth, streaming toward the stone castle walls.",
-                                          "style_modifier": "intense warm colors with fiery glow"
+                                          "visual_representation_of_text": "Pretty orange and yellow sparkles come out of the dragon's mouth, floating toward the castle walls like magic fireworks.",
+                                          "style_modifier": "warm happy colors with twinkly sparkles"
                                         },
                                         {
                                           "text": "and the knights ran away in fear.",
-                                          "visual_representation_of_text": "Knights in armor scramble and run in different directions, their capes flowing behind them, faces showing panic and alarm.",
-                                          "style_modifier": "dynamic motion blur effect"
+                                          "visual_representation_of_text": "The knights in shiny armor run around in silly directions, their capes waving like flags, with surprised faces.",
+                                          "style_modifier": "funny motion with bouncy movements"
                                         }
-                                      ]
+                                      ],
+                                      "script_scene_style": "Cartoonish, colorful, happy adventure style"
                                     }
                                     ```
 
@@ -178,11 +196,13 @@ system_instruction_split_context="""# Enhanced LLM Instruction Prompt for Video 
                                     ## Final Notes
 
                                     - **When in doubt, segment MORE**: It's better to have too many smooth transitions than too few jarring jumps
-                                    - **Think cinematically**: Imagine you're creating a storyboard for an animated film
+                                    - **Think cinematically**: Imagine you're creating a storyboard for a happy children's cartoon
                                     - **Test mentally**: If you can't picture smooth transitions between segments, split further
                                     - **Prioritize visual variety**: Each segment should show something visually distinct from the previous one
+                                    - **REMEMBER: Use childish language ALWAYS** - pretty colors, fun shapes, happy sparkles, cute patterns, bouncy movements
+                                    - **AVOID NSFW triggers**: Never use words like neon, psychedelic, abstract, swirling, intense, dark, mysterious
 
-                                    Your goal is to create a **fluid, cinematic experience** where images flow naturally like frames in an animation, not a slideshow of disconnected illustrations."""
+                                    Your goal is to create a **fluid, cinematic experience** where images flow naturally like frames in a happy children's animation, using only fun, innocent, kid-friendly descriptions!"""
 system_instruction_directResponse="""# Instruction Prompt for LLM
 
                                      ## Prompt:

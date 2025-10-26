@@ -471,6 +471,21 @@ def respond():
                 "type": "viseme",
                 "value": evt.viseme_id
             })
+        def clean_word_text(word):
+            """Clean word text to remove SSML artifacts and formatting"""
+            try:
+                # Decode HTML entities first
+                cleaned = html.unescape(word)
+                # Remove common SSML/formatting artifacts
+                cleaned = cleaned.replace('>', '').replace('\n', '').replace('\t', '').replace('\r', '')
+                # Remove any remaining XML tags that might leak through
+                cleaned = re.sub(r'<[^>]+>', '', cleaned)
+                # Strip whitespace
+                return cleaned.strip()
+            except Exception:
+                # Fallback to original word if cleaning fails
+                return word.strip()
+
         def word_handler(evt):
             offset_ms = evt.audio_offset / 10000  # Convert ticks to milliseconds
             events.append({
@@ -536,7 +551,7 @@ def respond():
                 word_timings = [
                     {
                         "time": e["time"] / 1000,    # Convert ms to seconds
-                        "word": e["word"]         # Azure viseme ID (integer)
+                        "word": clean_word_text(e["word"])  # Clean word text of SSML artifacts
                     } for e in word_events
                 ]
                 bookmark_timings = [

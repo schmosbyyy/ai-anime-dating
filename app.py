@@ -208,13 +208,14 @@ system_instruction_directResponse="""# Instruction Prompt for LLM
 
                                      ## Prompt:
 
-                                     Convert user input into an SSML (Speech Synthesis Markup Language) document with embedded bookmarks to trigger animations during speech synthesis. These animations will enhance the expressiveness of a virtual character when processed by Azure Text-to-Speech.
+                                     Convert the ENTIRE user input text (including any titles, headings, or narrative content) into an SSML (Speech Synthesis Markup Language) document with embedded bookmarks to trigger animations during speech synthesis. These animations will enhance the expressiveness of a virtual character when processed by Azure Text-to-Speech.
 
                                      ### Steps to Follow:
 
-                                     - **Understand the User's Message:**
+                                     - **Process the Complete Input:**
 
-                                         - Analyze the user's input to determine their intent, tone, and context. Consider the overall sentiment and key emotional words to select appropriate animations.
+                                         - Include ALL text from the user input, including titles, headings, and narrative content. Do not skip or omit any part of the input.
+                                         - Analyze the complete text to determine appropriate tone, context, and emotional content for animation placement.
 
                                      - **Enhance Speech with Prosody:**
 

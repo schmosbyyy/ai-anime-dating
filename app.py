@@ -21,34 +21,27 @@ app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": ["http://localhost:5173", "http://127.0.0.1:5173", "https://ai-anime-dating.onrender.com"]}})
 system_instruction_split_context="""# Video Segmentation Instruction Prompt
 
-                                    Transform scripts into fluid video sequences by creating highly granular visual segments with consistent character design.
+                                    Transform scripts into fluid video sequences by creating highly granular visual segments with consistent character design and conditional character presence.
 
-                                    ## Core Principle: Visual Focus Hierarchy
+                                    ## Core Principle: Separated Character Definitions
 
-                                    **Each segment describes what dominates the frame visually.**
-
-                                    ### Decision Rule for Every Segment:
-
-                                    **Ask: "What's the primary visual element in this shot?"**
-
-                                    1. **Character emotion/reaction** → Describe character fully with exact physical features
-                                    2. **Character performing major action** → Describe character fully
-                                    3. **Environmental effect/object** → Describe environment only (no character mention)
-                                    4. **Setting/atmosphere** → Describe setting only (no character mention)
-
-                                    **Key**: Characters can be present without being described. Only describe them when they're the visual subject.
+                                    **Characters are defined once, then conditionally included per segment.**
 
                                     ---
 
                                     ## Output Format
-
                                     ```json
                                     {
-                                      "script_scene_style": "Style description + complete character definitions",
+                                      "script_scene_style": "Environment and mood description ONLY (no character descriptions)",
+                                      "character_definitions": {
+                                        "CharacterName1": "Complete physical description",
+                                        "CharacterName2": "Complete physical description"
+                                      },
                                       "segments": [
                                         {
                                           "text": "Original script text (1-2 sentences)",
-                                          "visual_representation_of_text": "Visual description focused on primary element",
+                                          "visual_representation_of_text": "Visual description focused on action/scene",
+                                          "include_characters": ["CharacterName1"],
                                           "style_modifier": "Optional style variation"
                                         }
                                       ]
@@ -57,34 +50,103 @@ system_instruction_split_context="""# Video Segmentation Instruction Prompt
 
                                     ---
 
-                                    ## 1. Character Consistency
+                                    ## 1. Character Definition System
 
-                                    ### Define Characters Once
-                                    In `script_scene_style`, include complete character definitions:
+                                    ### Define Characters in character_definitions
+                                    Create a library of ALL characters with complete physical descriptions:
+                                    ```json
+                                    "character_definitions": {
+                                      "Pip": "kid with messy brown hair, big round glasses, colorful striped sweater, curious personality",
+                                      "Luna": "girl with long purple braids, yellow raincoat, green eyes, adventurous personality"
+                                    }
                                     ```
-                                    "Playful cartoon style featuring Pip (kid with messy brown hair, big round glasses,
-                                    colorful striped sweater, curious personality) and Luna (girl with long purple braids,
-                                    yellow raincoat, green eyes, adventurous personality)"
+
+                                    **Rules:**
+                                    - Include EVERY character that appears in the story
+                                    - Provide complete physical descriptions (hair, eyes, clothing, distinctive features)
+                                    - Use consistent, child-friendly language
+                                    - These definitions will be reused across all segments where characters appear
+
+                                    ### Define Environment in script_scene_style
+                                    Describe ONLY the setting, mood, and atmosphere - NO character descriptions:
+                                    ```
+                                    "script_scene_style": "Playful cartoon style in a magical computer room with twinkling lights and colorful decorations"
                                     ```
 
-                                    ### Use Characters Correctly
-                                    - **When character IS visual focus**: Use full description with exact features
-                                      - ✅ "Pip's big round glasses sparkle with excitement, messy brown hair bouncing"
-
-                                    - **When environment IS visual focus**: Skip character description entirely
-                                      - ✅ "Rainbow colors twirl and dance across the computer screen"
-                                      - ❌ "Rainbow colors twirl across the screen in front of Pip (kid with messy brown hair...)"
-
-                                    ### Never Change Appearance
-                                    When you describe a character, always use identical physical features:
-                                    - Same hair color, style, and length
-                                    - Same eye color
-                                    - Same clothing and accessories
-                                    - Same distinctive features
+                                    **Never include in script_scene_style:**
+                                    - ❌ "featuring Pip (kid with messy brown hair...)"
+                                    - ❌ "with Luna and her purple braids..."
+                                    - ✅ "in a cozy Halloween-themed bedroom"
+                                    - ✅ "Whimsical watercolor style with soft lighting"
 
                                     ---
 
-                                    ## 2. Segmentation Rules
+                                    ## 2. Per-Segment Character Control
+
+                                    ### Use include_characters Array
+                                    For each segment, explicitly list which characters should appear in the image:
+
+                                    **Character is visual focus:**
+                                    ```json
+                                    {
+                                      "text": "Pip sat at the computer, eyes wide.",
+                                      "visual_representation_of_text": "Character sits at glowing desk, eyes sparkling with wonder",
+                                      "include_characters": ["Pip"]
+                                    }
+                                    ```
+
+                                    **Environment/object is visual focus:**
+                                    ```json
+                                    {
+                                      "text": "The screen exploded with code.",
+                                      "visual_representation_of_text": "Bright colorful lines of code pop and bounce across screen like happy fireworks",
+                                      "include_characters": []
+                                    }
+                                    ```
+
+                                    **Multiple characters present:**
+                                    ```json
+                                    {
+                                      "text": "Pip and Luna high-fived.",
+                                      "visual_representation_of_text": "Two characters slap hands together in celebration",
+                                      "include_characters": ["Pip", "Luna"]
+                                    }
+                                    ```
+
+                                    ---
+
+                                    ## 3. Visual Descriptions Without Character Details
+
+                                    ### Key Rule: Don't Repeat Character Descriptions
+                                    Since character appearances are in `character_definitions`, your `visual_representation_of_text` should focus on:
+                                    - Actions being performed
+                                    - Emotions being expressed
+                                    - Camera angles and composition
+                                    - Environmental details
+
+                                    **Examples:**
+
+                                    ✅ **Correct:**
+                                    ```json
+                                    {
+                                      "visual_representation_of_text": "Character giggles happily, hair bouncing with joy",
+                                      "include_characters": ["Pip"]
+                                    }
+                                    ```
+                                    The image generator will add "Pip (kid with messy brown hair, big round glasses, colorful striped sweater)" automatically.
+
+                                    ❌ **Incorrect:**
+                                    ```json
+                                    {
+                                      "visual_representation_of_text": "Pip with messy brown hair and glasses giggles happily",
+                                      "include_characters": ["Pip"]
+                                    }
+                                    ```
+                                    This duplicates the character description unnecessarily.
+
+                                    ---
+
+                                    ## 4. Segmentation Rules
 
                                     ### Create 2-3x More Segments Than Expected
 
@@ -109,18 +171,74 @@ system_instruction_split_context="""# Video Segmentation Instruction Prompt
                                     **✅ Correct (3 segments):**
                                     ```
                                     Segment 1: "Mia walked through the forest,"
-                                    → Mia walks between tall trees, feet crunching on colorful leaves
+                                    → Character walks between tall trees, feet crunching on colorful leaves
+                                    → include_characters: ["Mia"]
 
                                     Segment 2: "pushed branches aside,"
                                     → Close-up of hands gently moving wiggly branches apart
+                                    → include_characters: []
 
                                     Segment 3: "and saw a glowing cabin."
-                                    → Mia's eyes widen with surprise seeing a cozy cabin with twinkly lights
+                                    → Character's eyes widen with surprise seeing a cozy cabin with twinkly lights
+                                    → include_characters: ["Mia"]
                                     ```
 
                                     ---
 
-                                    ## 3. Visual Descriptions (Child-Friendly Language)
+                                    ## 5. Complete Example
+
+                                    ### Input Script:
+                                    "Pip sat at the computer, eyes wide. The screen exploded with code. Colorful pumpkins appeared. Luna walked in. They both laughed."
+
+                                    ### Output:
+                                    ```json
+                                    {
+                                      "script_scene_style": "Playful cartoon style in a magical computer world with twinkling lights",
+                                      "character_definitions": {
+                                        "Pip": "kid with messy brown hair, big round glasses, colorful striped sweater, curious personality",
+                                        "Luna": "girl with long purple braids, yellow raincoat, green eyes, adventurous personality"
+                                      },
+                                      "segments": [
+                                        {
+                                          "text": "Pip sat at the computer, eyes wide.",
+                                          "visual_representation_of_text": "Character sits at desk, eyes sparkling with wonder at the glowing screen",
+                                          "include_characters": ["Pip"]
+                                        },
+                                        {
+                                          "text": "The screen exploded with code.",
+                                          "visual_representation_of_text": "Bright colorful lines of code pop and bounce all over the computer screen like happy fireworks",
+                                          "include_characters": []
+                                        },
+                                        {
+                                          "text": "Colorful pumpkins appeared.",
+                                          "visual_representation_of_text": "Little pumpkin drawings with smiley faces bounce up all over the screen with fun patterns",
+                                          "include_characters": []
+                                        },
+                                        {
+                                          "text": "Luna walked in.",
+                                          "visual_representation_of_text": "Character steps through doorway with a curious smile",
+                                          "include_characters": ["Luna"]
+                                        },
+                                        {
+                                          "text": "They both laughed.",
+                                          "visual_representation_of_text": "Two characters giggle together, sharing a joyful moment",
+                                          "include_characters": ["Pip", "Luna"]
+                                        }
+                                      ]
+                                    }
+                                    ```
+
+                                    **Notice:**
+                                    - Segments 2 & 3: `include_characters: []` → Only environment shown
+                                    - Segment 1: `include_characters: ["Pip"]` → Only Pip appears
+                                    - Segment 4: `include_characters: ["Luna"]` → Only Luna appears
+                                    - Segment 5: `include_characters: ["Pip", "Luna"]` → Both appear together
+                                    - Character physical descriptions NEVER repeated in visual_representation_of_text
+                                    - script_scene_style contains NO character descriptions
+
+                                    ---
+
+                                    ## 6. Child-Friendly Language
 
                                     ### Always Use Simple, Playful Words
 
@@ -145,63 +263,88 @@ system_instruction_split_context="""# Video Segmentation Instruction Prompt
 
                                     ---
 
-                                    ## 4. Complete Example
+                                    ## 7. Decision Tree for include_characters
 
-                                    ### Input Script:
-                                    "Pip sat at the computer, eyes wide. The screen exploded with code. Colorful pumpkins appeared. Pip laughed with joy."
+                                    For every segment, ask yourself:
 
-                                    ### Output:
+                                    **Is a character the primary visual subject of this shot?**
+                                    - YES → Add character name(s) to `include_characters`
+                                    - NO → Use empty array `include_characters: []`
 
-                                    ```json
-                                    {
-                                      "script_scene_style": "Playful cartoon style featuring Pip (kid with messy brown hair, big round glasses, colorful striped sweater, curious personality) in a magical computer world",
-                                      "segments": [
-                                        {
-                                          "text": "Pip sat at the computer, eyes wide.",
-                                          "visual_representation_of_text": "Pip sits at a desk with messy brown hair, big round glasses reflecting the screen, wearing a colorful striped sweater, eyes sparkling with wonder"
-                                        },
-                                        {
-                                          "text": "The screen exploded with code.",
-                                          "visual_representation_of_text": "Bright colorful lines of code pop and bounce all over the computer screen like happy fireworks"
-                                        },
-                                        {
-                                          "text": "Colorful pumpkins appeared.",
-                                          "visual_representation_of_text": "Little pumpkin drawings with smiley faces bounce up all over the screen with fun patterns"
-                                        },
-                                        {
-                                          "text": "Pip laughed with joy.",
-                                          "visual_representation_of_text": "Pip giggles happily, messy brown hair bouncing, big round glasses catching the magical screen light, colorful striped sweater bright and cheerful"
-                                        }
-                                      ]
-                                    }
-                                    ```
+                                    **Examples:**
 
-                                    **Notice:**
-                                    - Segments 1 & 4: Character is focus → Full descriptions used
-                                    - Segments 2 & 3: Screen/objects are focus → No character descriptions
-                                    - Character appearance identical in segments 1 & 4
-                                    - All language child-friendly and playful
+                                    | Segment Text | Primary Visual | include_characters |
+                                    |--------------|----------------|-------------------|
+                                    | "Pip smiled" | Character emotion | `["Pip"]` |
+                                    | "Code rained down" | Environment effect | `[]` |
+                                    | "Pip and Luna hugged" | Multiple characters | `["Pip", "Luna"]` |
+                                    | "The door creaked open" | Object/setting | `[]` |
+                                    | "Pip's eyes widened" | Character reaction | `["Pip"]` |
+                                    | "Sparks flew everywhere" | Environment effect | `[]` |
 
                                     ---
 
-                                    ## 5. Quality Checklist
+                                    ## 8. Quality Checklist
 
                                     Before submitting, verify:
 
-                                    - [ ] **Visual Focus**: Does each segment describe only the primary visual element?
-                                    - [ ] **Character Usage**: Are characters described only when they're the visual subject?
-                                    - [ ] **Character Consistency**: When characters ARE described, do they have identical features?
+                                    - [ ] **Separated Definitions**: Are characters ONLY in `character_definitions`, not in `script_scene_style`?
+                                    - [ ] **Include Characters Array**: Does EVERY segment have an `include_characters` array (even if empty)?
+                                    - [ ] **Character Consistency**: Are character definitions in `character_definitions` identical throughout?
+                                    - [ ] **No Duplication**: Does `visual_representation_of_text` avoid repeating physical character descriptions?
                                     - [ ] **Segment Frequency**: Do you have 2-3x more segments than paragraphs?
                                     - [ ] **Child-Friendly**: All descriptions use simple, playful, innocent language?
                                     - [ ] **Smooth Flow**: Does each segment naturally lead to the next?
 
                                     ---
 
+                                    ## 9. Common Mistakes to Avoid
+
+                                    ### ❌ WRONG:
+                                    ```json
+                                    {
+                                      "script_scene_style": "Cartoon featuring Pip (messy hair, glasses) in a room",
+                                      "character_definitions": {},
+                                      "segments": [
+                                        {
+                                          "visual_representation_of_text": "Pip with messy hair looks at screen",
+                                          "include_characters": []
+                                        }
+                                      ]
+                                    }
+                                    ```
+                                    **Problems:** Character in script_scene_style, empty character_definitions, character description in visual text, wrong include_characters
+
+                                    ### ✅ CORRECT:
+                                    ```json
+                                    {
+                                      "script_scene_style": "Playful cartoon style in a cozy computer room",
+                                      "character_definitions": {
+                                        "Pip": "kid with messy brown hair, big round glasses, colorful striped sweater"
+                                      },
+                                      "segments": [
+                                        {
+                                          "visual_representation_of_text": "Character looks at screen with excited expression",
+                                          "include_characters": ["Pip"]
+                                        }
+                                      ]
+                                    }
+                                    ```
+
+                                    ---
+
                                     ## Key Reminders
 
-                                    **Visual hierarchy over constant presence**: Show what dominates each frame.
+                                    **Separation is critical**:
+                                    - `script_scene_style` = environment/mood only
+                                    - `character_definitions` = appearance library
+                                    - `include_characters` = per-segment control
 
-                                    **Character consistency when shown**: Same appearance every time, but not in every segment.
+                                    **Character consistency**: Define once in `character_definitions`, reference by name in `include_characters`.
+
+                                    **Conditional presence**: Empty `include_characters` array = no characters in that image.
+
+                                    **Focus on action**: `visual_representation_of_text` describes what's happening, not what characters look like.
 
                                     **Segment frequently**: More segments = smoother video flow.
 
@@ -428,11 +571,13 @@ def respond():
                 elif cleaned_input.startswith('```') and cleaned_input.endswith('```'):
                     cleaned_input = cleaned_input[3:-3].strip()  # Remove plain ```
                 data = json.loads(cleaned_input)
-                # Extract segments and script_scene_style
+                # Extract segments, script_scene_style, and character_definitions
                 segments = data.get('segments', [])  # Default to empty list if missing
                 style = data.get('script_scene_style', 'realistic')  # Default to 'realistic' if missing
-                logger.info(f"Successfully parsed {len(segments)} segments with style: {style}")
-                return segments, style  # Return both as a tuple
+                character_definitions = data.get('character_definitions', {})  # Default to empty dict if missing
+
+                logger.info(f"Successfully parsed {len(segments)} segments with style: {style} and {len(character_definitions)} characters")
+                return segments, style, character_definitions  # Return all three as a tuple
             except json.JSONDecodeError as e:
                 logger.error(f"JSON parsing error for script context: {str(e)}")
                 logger.error(f"Raw input: {input_json[:500]}...")  # Log first 500 chars for debugging
@@ -443,7 +588,7 @@ def respond():
 
         # Usage
         outputImagePrompts = convert_response_to_list(splitContext.text)
-        segments, style = outputImagePrompts  # Unpack the tuple
+        segments, style, character_definitions = outputImagePrompts  # Unpack the tuple
         #AZURE LOGIC:  Set up speech configuration
         try:
             logger.info("Setting up Azure Speech Synthesis configuration")
@@ -579,6 +724,7 @@ def respond():
                     "bookmark_timings": bookmark_timings,
                     "splitContext": segments,
                     "style": style,
+                    "character_definitions": character_definitions,
                 })
             else:
                 # Return error if synthesis fails

@@ -43,6 +43,16 @@ system_instruction_split_context="""# Enhanced LLM Instruction Prompt for Video 
                                     - **Generate Visual Descriptions**: For each segment, create a concise, vivid description capturing key visual elements like setting, characters, actions, and atmosphere using ONLY child-friendly, innocent language.
                                     - **Define Visual Style**: Always use a global visual style that's cartoonish, playful, and kid-friendly (like "Cartoonish, colorful, happy" or "Playful animation style"). Optionally, provide style modifiers for segments requiring distinct visual treatment.
 
+                                    ## CRITICAL: Character Consistency Requirements
+
+                                    To ensure visual continuity across all generated segments:
+
+                                    - **Define Specific Characters**: Create detailed physical descriptions for each character that appear in the story, including hair style, eye color, clothing, accessories, and personality traits.
+                                    - **Maintain Appearance**: Every segment's visual_representation_of_text MUST feature the exact same character descriptions with identical physical features.
+                                    - **Include in Global Style**: Embed complete character definitions directly in the script_scene_style field so they apply to all segments.
+                                    - **No Character Drift**: Never change hair color, eye color, clothing, or physical features between segments. Use identical descriptions for recurring characters.
+                                    - **Character Reference**: When referring to characters in segments, use the exact names and descriptions established in script_scene_style.
+
                                     ## Input
 
                                     - A single string containing the full script.
@@ -97,6 +107,9 @@ system_instruction_split_context="""# Enhanced LLM Instruction Prompt for Video 
                                     - **Include motion direction** (character bounces happily, sparkles float gently)
                                     - **Describe lighting changes** between segments for smooth transitions using fun words like "happy lights", "twinkly glow", "pretty colors"
                                     - **Use active, present-tense verbs** for immediacy but keep them fun and child-like (bounces, twinkles, sparkles, dances)
+                                    - **Character Fidelity**: Always reference the exact characters defined in script_scene_style using identical physical descriptions (hair, eyes, clothing, accessories)
+                                    - **Appearance Lock**: Maintain exact same character appearances across ALL segments - never change hair color, eye color, clothing, or physical features
+                                    - **Consistent Naming**: Use the same character names and descriptors throughout all segments as established in script_scene_style
                                     - **ALWAYS avoid mature or complex artistic language** - stick to simple, happy, kid-friendly words
 
                                     ### 5. Style Modifiers (Expanded Use - Keep it Kid-Friendly)
@@ -183,6 +196,54 @@ system_instruction_split_context="""# Enhanced LLM Instruction Prompt for Video 
                                     }
                                     ```
 
+                                    ## Character Consistency Examples
+
+                                    ### ✅ CORRECT (Character Consistency Maintained)
+
+                                    ```json
+                                    {
+                                      "script_scene_style": "Cartoonish anime style featuring Alex (cute boy: curly black hair, blue school uniform with red tie, bright green eyes, cheerful personality) and Emma (magical girl: long pink hair in twin tails, frilly white dress, big black pointy witch hat, blue eyes, playful personality)",
+                                      "segments": [
+                                        {
+                                          "text": "Alex waved hello",
+                                          "visual_representation_of_text": "Alex waves enthusiastically with his curly black hair bouncing, wearing his blue uniform and red tie, bright green eyes sparkling with cheer"
+                                        },
+                                        {
+                                          "text": "Emma giggled",
+                                          "visual_representation_of_text": "Emma laughs with her pink twin tails swaying, big black witch hat tilting, blue eyes crinkling with joy in her frilly white dress",
+                                          "style_modifier": "playful_laughter, magical_sparkles"
+                                        },
+                                        {
+                                          "text": "They hugged",
+                                          "visual_representation_of_text": "Alex in his blue school uniform and Emma in her frilly white dress with big black witch hat share a happy hug, their eyes sparkling",
+                                          "style_modifier": "warm_happy_colors, friendly_glow"
+                                        }
+                                      ]
+                                    }
+                                    ```
+
+                                    ### ❌ INCORRECT (Character Inconsistency)
+
+                                    ```json
+                                    {
+                                      "segments": [
+                                        {
+                                          "text": "Alex waved hello",
+                                          "visual_representation_of_text": "A boy with blonde hair waves"  // WRONG: Changed hair color from black to blonde
+                                        },
+                                        {
+                                          "text": "Emma giggled",
+                                          "visual_representation_of_text": "A girl with short brown hair laughs"  // WRONG: Changed hair from long pink twin tails to short brown
+                                        },
+                                        {
+                                          "text": "They hugged",
+                                          "visual_representation_of_text": "The boy and girl hug"  // WRONG: No character descriptions, generic terms
+                                        }
+                                      ],
+                                      "script_scene_style": "Cartoonish anime style"  // WRONG: Missing character definitions
+                                    }
+                                    ```
+
                                     ## Quality Checklist
 
                                     Before finalizing segments, verify:
@@ -193,6 +254,8 @@ system_instruction_split_context="""# Enhanced LLM Instruction Prompt for Video 
                                     - [ ] **Length**: Are most segments 1-2 sentences maximum?
                                     - [ ] **Visual Clarity**: Does each description paint a distinct, clear image?
                                     - [ ] **No Redundancy**: Are adjacent segments showing progression, not repetition?
+                                    - [ ] **Character Consistency**: Do all segments feature identical character appearances using the exact descriptions from script_scene_style?
+                                    - [ ] **No Visual Drift**: Are hair colors, eye colors, clothing, and physical features consistent across ALL segments?
 
                                     ## Final Notes
 
